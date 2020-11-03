@@ -7,6 +7,7 @@ from codebase.file_utils import (
     make_folder,
     path_backslash
 )
+from codebase.resampling_routines import multinomial
 from codebase.data import get_data
 from scipy.stats import bernoulli, multivariate_normal
 from scipy.special import expit, logsumexp
@@ -94,7 +95,8 @@ def run_stan_model(
     num_chains,
     initial_values=None,
     inv_metric = None,
-    adapt_engaged = False
+    adapt_engaged = False,
+    stepsize = None
     ):
 
     if initial_values is not None:
@@ -109,6 +111,8 @@ def run_stan_model(
 
     if inv_metric is not None:
         control['inv_metric'] = inv_metric
+    if stepsize is not None:
+        control['stepsize'] = stepsize
 
     fit_run = compiled_model.sampling(
         data={
@@ -140,7 +144,8 @@ def run_mcmc(
     inv_metric = None,
     load_inv_metric = False,
     save_inv_metric = False,
-    adapt_engaged = False
+    adapt_engaged = False,
+    stepsize = None
     ):
 
     if gen_model:
@@ -152,6 +157,7 @@ def run_mcmc(
     if load_inv_metric:
         inv_metric = load_obj('inv_metric', log_dir)
         
+        
     fit_run = run_stan_model(
         data,
         compiled_model = sm,
@@ -160,7 +166,8 @@ def run_mcmc(
         num_chains = num_chains,
         initial_values= initial_values,
         inv_metric= inv_metric,
-        adapt_engaged=adapt_engaged
+        adapt_engaged=adapt_engaged,
+        stepsize=stepsize
         )
 
     if save_inv_metric is not None:
@@ -191,12 +198,11 @@ def jitter(data, particles, log_dir):
 
     last_position = fit_run.get_last_position()[0] # select chain 1
     mass_matrix = fit_run.get_inv_metric(as_dict=True)
+    stepsize = fit_run.get_stepsize()
 
     particles['alpha'][m] = last_position['alpha']
     particles['L_R'][m] = last_position['L_R']
     particles['Marg_cov'][m] = last_position['Marg_cov']
-
-    # pdb.set_trace()
 
     for m in range(1, particles['M']):
         fit_run = run_mcmc(
@@ -204,7 +210,7 @@ def jitter(data, particles, log_dir):
             gen_model = False,
             model_num = 0,
             num_samples = 20, 
-            num_warmup = 1,
+            num_warmup = 0,
             num_chains = 1,
             log_dir = log_dir,
             initial_values = {
@@ -212,17 +218,14 @@ def jitter(data, particles, log_dir):
                 'L_R': particles['L_R'][m,0]    
             },
             inv_metric= mass_matrix,
-            adapt_engaged=True
+            adapt_engaged=False,
+            stepsize = stepsize
             )
         last_position = fit_run.get_last_position()[0] # select chain 1
-        # mass_matrix2 = fit_run.get_inv_metric(as_dict=True)
-
 
         particles['alpha'][m] = last_position['alpha']
         particles['L_R'][m] = last_position['L_R']
         particles['Marg_cov'][m] = last_position['Marg_cov']
-
-    # pdb.set_trace()
 
     return particles
 
@@ -246,6 +249,9 @@ def loglklhd_z(y, z):
 def loglklhd_z_vector(y, mean, cov, nsim_z):
     """
     dim(y) = k
+    
+    Generate z samples from normal and compute the 
+    mean likelihood of all z
     """
 
     z = multivariate_normal(
@@ -261,41 +267,79 @@ def loglklhd_z_vector(y, mean, cov, nsim_z):
 
 
 def get_weights(y, particles):
+    """
+    dim(y) = k 
+
+    For a single data point y, compute the
+    likelihood of each particle as the 
+    average likelihood across a sample of latent
+    variables z.
+    """
 
     weights = np.empty(particles['M'])
     for m in range(particles['M']):
         weights[m] = loglklhd_z_vector(
             y = y,
-            mean = particles['alpha'][m].reshape(6,),
-            cov = particles['Marg_cov'][m].reshape(6,6),
+            mean = particles['alpha'][m].reshape(y.shape),
+            cov = particles['Marg_cov'][m].reshape(y.shape[0],y.shape[0]),
             nsim_z = 10
         )
     return weights
 
 
-def ESS(w):
-    a = logsumexp(w[~np.isnan(w)])*2
-    b = logsumexp(2*w[~np.isnan(w)])
-    return  np.exp(a-b)
+def exp_and_normalise(lw):
+    """Exponentiate, then normalise (so that sum equals one).
+    Arguments
+    ---------
+    lw: ndarray
+        log weights.
+    Returns
+    -------
+    W: ndarray of the same shape as lw
+        W = exp(lw) / sum(exp(lw))
+    Note
+    ----
+    uses the log_sum_exp trick to avoid overflow (i.e. subtract the max
+    before exponentiating)
+    See also
+    --------
+    log_sum_exp
+    log_mean_exp
+    """
+    w = np.exp(lw - lw.max())
+    return w / w.sum()
 
 
-def multinomial_sample_particles(particles, probs = None):
-    size = particles['M']
+def essl(lw):
+    """ESS (Effective sample size) computed from log-weights.
+    Parameters
+    ----------
+    lw: (N,) ndarray
+        log-weights
+    Returns
+    -------
+    float
+        the ESS of weights w = exp(lw), i.e. the quantity
+        sum(w**2) / (sum(w))**2
+    Note
+    ----
+    The ESS is a popular criterion to determine how *uneven* are the weights.
+    Its value is in the range [1, N], it equals N when weights are constant,
+    and 1 if all weights but one are zero.
+    """
+    w = np.exp(lw - lw.max())
+    return (w.sum())**2 / np.sum(w**2)
 
-    # if no weights assign uniform weights
-    if probs is None:
-        probs = np.ones(size)
 
-    assert size == len(probs)
+def resample_particles(particles):
+    assert  particles['M'] == len(particles['w'])
 
-    # normalize weights if necessary
-    if np.sum(probs) != 1:
-        normalized_probs = probs / np.sum(probs)
-    sampled_index = np.random.choice(np.arange(size),
-                                     p=normalized_probs,
-                                     size=size)
-
+    w = exp_and_normalise(particles['w'])
+    nw = w / np.sum(w)
+    np.testing.assert_allclose(1., nw.sum())  
+    sampled_index = multinomial(nw, particles['M'])
     for key in particles['param_names']:
             particles[key] = particles[key][sampled_index]
 
     return particles
+

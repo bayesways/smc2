@@ -14,9 +14,9 @@ from codebase.ibis import (
     run_mcmc,
     sample_prior_particles,
     get_weights,
-    ESS,
+    essl,
     jitter,
-    multinomial_sample_particles
+    resample_particles
 )
 import pdb
     
@@ -45,7 +45,7 @@ data = get_data(nsim_data, 6, 1)
 save_obj(data, 'data', log_dir)
 
 param_names = ['alpha', 'Marg_cov', 'L_R']
-nsim_particles = 100
+nsim_particles = 50
 num_warmup = 0
 num_chains = 1
 
@@ -81,13 +81,13 @@ for t in tqdm(range(nsim_data)):
     log_incr_weights = get_weights(data['y'][t], particles)
     log_weights = log_incr_weights + log_weights
     
-    if (ESS(log_weights) < degeneracy_limit * particles['M']) and (t+1) < data['N']:
+    if (essl(log_weights) < degeneracy_limit * particles['M']) and (t+1) < data['N']:
         data_temp = dict()
         data_temp['J'] = data['J']
         data_temp['y'] = data['y'][:(t+1)].copy()
         data_temp['N'] = t+1
         print("Deg %d"%(t))
-        particles = multinomial_sample_particles(particles, np.exp(log_weights))
+        particles = resample_particles(particles)
         
         particles = jitter(data_temp, particles, log_dir)
         particles['w'] = np.zeros(particles['M'])
@@ -95,4 +95,3 @@ for t in tqdm(range(nsim_data)):
         particles['w'] = log_weights
 
     save_obj(particles, 'particles%s'%(t+1), log_dir)
-
