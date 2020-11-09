@@ -19,13 +19,13 @@ def compile_model(model_num, prior, log_dir):
     path_to_stan = './codebase/stancode/'
 
     if prior: 
-        with open('%smodel_%s_prior.stan'%(
+        with open('%spriors/model_%s.stan'%(
         path_to_stan,
         model_num
         ), 'r') as file:
             model_code = file.read()
     else:
-        with open('%smodel_%s.stan'%(
+        with open('%smodels/model_%s.stan'%(
         path_to_stan,
         model_num
         ), 'r') as file:
@@ -57,11 +57,12 @@ def sample_prior_particles(
         sm_prior = load_obj('sm_prior', log_dir)
     
     fit_run = sm_prior.sampling(
-        data={
-            'N':data['N'],
-            'J': data['J'],
-            'y' : data['y']
-        },
+        # data={
+        #     'N':data['N'],
+        #     'J': data['J'],
+        #     'y' : data['y']
+        # },
+        data = data,
         iter=num_samples,
         warmup=0,
         chains=num_chains,
@@ -126,11 +127,12 @@ def run_stan_model(
         control['stepsize'] = stepsize
 
     fit_run = compiled_model.sampling(
-        data={
-            'N':data['N'],
-            'J': data['J'],
-            'y' : data['y']
-        },
+        # data={
+        #     'N':data['N'],
+        #     'J': data['J'],
+        #     'y' : data['y']
+        # },
+        data = data,
         iter=num_samples + num_warmup,
         warmup=num_warmup,
         chains=num_chains,
