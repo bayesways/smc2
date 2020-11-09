@@ -113,7 +113,8 @@ def get_data(
     if random_seed is not None:
         np.random.seed(random_seed)
 
-    alpha = np.zeros(J)
+    # alpha = np.zeros(J)
+    alpha = [1,2,-1,-2,0,0.6]
 
     Phi_cov = np.eye(J)
     zz = multivariate_normal.rvs(
@@ -134,4 +135,34 @@ def get_data(
     data['z'] = zz
     data['y'] = yy
     data['p'] = pp
+    return data
+
+
+
+def get_normal_data(
+    nsim_data,
+    J=6,
+    random_seed=None,
+    ):
+    if random_seed is not None:
+        np.random.seed(random_seed)
+
+    # alpha = np.zeros(J)
+    alpha = np.array([1,2,-1,-2,0,4]).astype(float)
+    sigma = np.array([1,2,3,1,2,3]).astype(float)
+    Marg_cov = np.diag(sigma) @ np.eye(J) @ np.diag(sigma)
+    yy = multivariate_normal.rvs(
+        mean=alpha,
+        cov=Marg_cov,
+        size=nsim_data
+    )
+    
+    data = dict()
+    data['random_seed'] = random_seed
+    data['N'] = nsim_data
+    data['J'] = J
+    data['alpha'] = alpha
+    data['sigma'] = sigma
+    data['Marg_cov'] = Marg_cov
+    data['y'] = yy
     return data

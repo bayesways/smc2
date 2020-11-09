@@ -13,11 +13,14 @@ from codebase.ibis import (
     compile_model,
     run_mcmc,
     sample_prior_particles,
-    get_weights,
     essl,
-    jitter,
     resample_particles
 )
+from codebase.ibis_tlk1 import (
+    get_weights,
+    jitter,
+)
+from scipy.special import logsumexp
 import pdb
     
 parser = argparse.ArgumentParser()
@@ -40,16 +43,12 @@ else:
     log_dir = path_backslash(log_dir)
     print("\n\nReading from existing directory: %s" % log_dir)
 
-nsim_data = 20
+nsim_data = 10
 data = get_data(nsim_data, 6, 1)
 save_obj(data, 'data', log_dir)
 
 param_names = ['alpha', 'Marg_cov', 'L_R']
-nsim_particles = 50
-num_warmup = 0
-num_chains = 1
-
-
+nsim_particles = 200
 
 if args.gen_model:
     compile_model(
@@ -75,10 +74,11 @@ particles['names'] = particles['latent_var_names'] + particles['param_names']
 particles['w'] = np.zeros(nsim_particles)
 log_weights = particles['w']
 
-
+log_lklhds = np.empty(nsim_data)
 degeneracy_limit = 0.5
 for t in tqdm(range(nsim_data)):
     log_incr_weights = get_weights(data['y'][t], particles)
+    log_lklhds[t] =  logsumexp(log_incr_weights + log_weights) - logsumexp(log_weights)
     log_weights = log_incr_weights + log_weights
     
     if (essl(log_weights) < degeneracy_limit * particles['M']) and (t+1) < data['N']:
@@ -93,5 +93,8 @@ for t in tqdm(range(nsim_data)):
         particles['w'] = np.zeros(particles['M'])
     else:
         particles['w'] = log_weights
-
     save_obj(particles, 'particles%s'%(t+1), log_dir)
+    
+
+marg_lklhd = np.exp(logsumexp(log_lklhds))
+print('Marginal Likelihood %.2f'%marg_lklhd)

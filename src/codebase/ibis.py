@@ -19,13 +19,13 @@ def compile_model(model_num, prior, log_dir):
     path_to_stan = './codebase/stancode/'
 
     if prior: 
-        with open('%slogit_%s_prior.stan'%(
+        with open('%smodel_%s_prior.stan'%(
         path_to_stan,
         model_num
         ), 'r') as file:
             model_code = file.read()
     else:
-        with open('%slogit_%s.stan'%(
+        with open('%smodel_%s.stan'%(
         path_to_stan,
         model_num
         ), 'r') as file:
@@ -71,8 +71,19 @@ def sample_prior_particles(
     particles = fit_run.extract(
         permuted=False, pars=param_names)
 
-    save_obj(particles, 'particles', log_dir)
+    return particles
 
+
+def get_initial_values_dict(particles, m):
+    particles_dict = dict()
+    for n in particles['param_names']:
+        particles_dict[n] = particles[n][m,0]
+    return particles_dict
+
+
+def set_last_position(particles, m, last_position):
+    for n in particles['param_names']:
+        particles[n][m] = last_position[n]
     return particles
 
 
@@ -188,10 +199,7 @@ def jitter(data, particles, log_dir):
         num_warmup = 1000,
         num_chains = 1,
         log_dir = log_dir,
-        initial_values = {
-            'alpha' : particles['alpha'][m,0],
-            'L_R': particles['L_R'][m,0]    
-        },
+        initial_values = get_initial_values_dict(particles, m),
         load_inv_metric= False, 
         adapt_engaged = True
         )
@@ -200,9 +208,7 @@ def jitter(data, particles, log_dir):
     mass_matrix = fit_run.get_inv_metric(as_dict=True)
     stepsize = fit_run.get_stepsize()
 
-    particles['alpha'][m] = last_position['alpha']
-    particles['L_R'][m] = last_position['L_R']
-    particles['Marg_cov'][m] = last_position['Marg_cov']
+    particles = set_last_position(particles, m, last_position)
 
     for m in range(1, particles['M']):
         fit_run = run_mcmc(
@@ -213,78 +219,16 @@ def jitter(data, particles, log_dir):
             num_warmup = 0,
             num_chains = 1,
             log_dir = log_dir,
-            initial_values = {
-                'alpha' : particles['alpha'][m,0],
-                'L_R': particles['L_R'][m,0]    
-            },
+            initial_values = get_initial_values_dict(particles, m),
             inv_metric= mass_matrix,
             adapt_engaged=False,
             stepsize = stepsize
             )
         last_position = fit_run.get_last_position()[0] # select chain 1
 
-        particles['alpha'][m] = last_position['alpha']
-        particles['L_R'][m] = last_position['L_R']
-        particles['Marg_cov'][m] = last_position['Marg_cov']
+        particles = set_last_position(particles, m, last_position)
 
     return particles
-
-
-def update_particle_values(particles, last_position, m):
-    for name in particles['param_names']:
-        particles[name][m] = last_position[name]
-    return particles
-
-
-def loglklhd_z(y, z):
-    """
-    dim(y) = k
-    dim(z) = k
-    """
-    a = np.log(expit(z)) * y + np.log(1 - expit(z)) * (1-y) 
-    return np.sum(a)
-
-
-
-def loglklhd_z_vector(y, mean, cov, nsim_z):
-    """
-    dim(y) = k
-    
-    Generate z samples from normal and compute the 
-    mean likelihood of all z
-    """
-
-    z = multivariate_normal(
-        mean,
-        cov,
-        ).rvs(size=nsim_z)
-    loglklhds = np.empty(nsim_z)
-    for i in range(nsim_z):
-        loglklhds[i] = np.sum(
-            loglklhd_z(y, z[i])
-            )
-    return np.mean(loglklhds)
-
-
-def get_weights(y, particles):
-    """
-    dim(y) = k 
-
-    For a single data point y, compute the
-    likelihood of each particle as the 
-    average likelihood across a sample of latent
-    variables z.
-    """
-
-    weights = np.empty(particles['M'])
-    for m in range(particles['M']):
-        weights[m] = loglklhd_z_vector(
-            y = y,
-            mean = particles['alpha'][m].reshape(y.shape),
-            cov = particles['Marg_cov'][m].reshape(y.shape[0],y.shape[0]),
-            nsim_z = 10
-        )
-    return weights
 
 
 def exp_and_normalise(lw):
