@@ -105,7 +105,110 @@ def check_posdef(R):
     return 0    
 
 
-def get_data(
+def gen_data_master(
+    model_num,
+    nsim_data,
+    J=6,
+    K=1,
+    c=1,
+    random_seed=None
+    ):
+    if model_num == 1:
+        return gen_data_1(
+            nsim_data,
+            J=6,
+            K=1,
+            c=1,
+            random_seed=random_seed
+            )
+    elif model_num == 2:
+        return gen_data_2(
+            nsim_data,
+            J=6,
+            random_seed=random_seed
+            )
+    elif model_num == 3:
+        return gen_data_3(
+            nsim_data,
+            J=6,
+            random_seed=random_seed
+            )
+    
+
+def gen_data_1(
+    nsim_data,
+    J=6,
+    K=1,
+    c=1,
+    random_seed=None
+    ):
+    if random_seed is not None:
+        np.random.seed(random_seed)
+
+    alpha = np.array([-0.53,  0.35, -1.4 , -1.4 , -0.96, -2.33])
+    # alpha = np.zeros(J)
+    beta = np.array([1, 0.7, .8, .5, .9, .6])
+
+    zz = norm.rvs(scale=c, size=nsim_data)
+    yy = alpha + np.outer(zz, beta)
+    
+    DD = bernoulli.rvs(p=expit(yy))
+
+    
+    data = dict()
+    data['random_seed'] = random_seed
+    data['N'] = nsim_data
+    data['K'] = K
+    data['J'] = J
+    data['alpha'] = alpha
+    data['beta'] = beta
+    data['sigma'] = c
+    data['z'] = zz
+    data['y'] = yy
+    data['D'] = DD
+    data['stan_constants'] = [
+        'N',
+        'J'
+        ]
+    data['stan_data'] = [
+        'z',
+        'y'
+        ]
+    return(data)
+
+
+def gen_data_2(
+    nsim_data,
+    J=6,
+    random_seed=None,
+    ):
+    if random_seed is not None:
+        np.random.seed(random_seed)
+
+    # alpha = np.zeros(J)
+    alpha = np.array([1,2,-1,-2,0,4]).astype(float)
+    sigma = np.array([1,2,3,1,2,3]).astype(float)
+    Marg_cov = np.diag(sigma) @ np.eye(J) @ np.diag(sigma)
+    yy = multivariate_normal.rvs(
+        mean=alpha,
+        cov=Marg_cov,
+        size=nsim_data
+    )
+    
+    data = dict()
+    data['random_seed'] = random_seed
+    data['N'] = nsim_data
+    data['J'] = J
+    data['alpha'] = alpha
+    data['sigma'] = sigma
+    data['Marg_cov'] = Marg_cov
+    data['y'] = yy
+    data['stan_constants'] = ['N','J']
+    data['stan_data'] = ['y']
+    return data
+
+
+def gen_data_3(
     nsim_data,
     J=6,
     random_seed=None,
@@ -138,37 +241,7 @@ def get_data(
     return data
 
 
-
-def get_normal_data(
-    nsim_data,
-    J=6,
-    random_seed=None,
-    ):
-    if random_seed is not None:
-        np.random.seed(random_seed)
-
-    # alpha = np.zeros(J)
-    alpha = np.array([1,2,-1,-2,0,4]).astype(float)
-    sigma = np.array([1,2,3,1,2,3]).astype(float)
-    Marg_cov = np.diag(sigma) @ np.eye(J) @ np.diag(sigma)
-    yy = multivariate_normal.rvs(
-        mean=alpha,
-        cov=Marg_cov,
-        size=nsim_data
-    )
-    
-    data = dict()
-    data['random_seed'] = random_seed
-    data['N'] = nsim_data
-    data['J'] = J
-    data['alpha'] = alpha
-    data['sigma'] = sigma
-    data['Marg_cov'] = Marg_cov
-    data['y'] = yy
-    return data
-
-
-def gen_factor_data(
+def gen_data_4(
     nsim_data,
     J=6,
     K=2,
@@ -216,6 +289,8 @@ def gen_factor_data(
     Marg_cov = beta @ Phi_cov @ beta.T + Theta
     yy = multivariate_normal.rvs(mean=alpha, cov=Marg_cov, size=nsim_data)
 
+    sigma_prior = np.diag(np.linalg.inv(np.cov(yy, rowvar=False)))
+
     data = dict()
     data['random_seed'] = random_seed
     data['N'] = nsim_data
@@ -231,5 +306,5 @@ def gen_factor_data(
     data['sigma'] = sigma
     data['y'] = yy
     data['off_diag_residual'] = off_diag_residual
-
+    data['sigma_prior'] = sigma_prior
     return(data)

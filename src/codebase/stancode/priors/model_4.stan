@@ -2,7 +2,7 @@ data {
   int<lower=1> N;
   int<lower=1> K;
   int<lower=1> J;
-  matrix[N,J] yy;
+  matrix[N,J] y;
   vector[J] sigma_prior;
 }
 

@@ -2,7 +2,7 @@ data {
   int<lower=1> N;
   int<lower=1> K;
   int<lower=1> J;
-  matrix[N,J] yy;
+  matrix[N,J] y;
   vector[J] sigma_prior;
 }
 
@@ -46,7 +46,7 @@ model {
   for(j in 1:J) sigma_square[j] ~ inv_gamma(c0, (c0-1)/sigma_prior[j]);
   Phi_cov ~ inv_wishart(J+4, I_K);
   for (n in 1:N){
-    yy[n, ] ~ multi_normal(alpha,  Marg_cov);
+    y[n, ] ~ multi_normal(alpha,  Marg_cov);
   }
   
 }

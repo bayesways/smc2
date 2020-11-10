@@ -8,14 +8,13 @@ from codebase.file_utils import (
     path_backslash
 )
 from codebase.resampling_routines import multinomial
-from codebase.data import get_data
 from scipy.stats import bernoulli, multivariate_normal
 from scipy.special import expit, logsumexp
 from tqdm import tqdm
 import pdb
 
 
-def compile_model(model_num, prior, log_dir):
+def compile_model(model_num, prior, log_dir, save=True):
     path_to_stan = './codebase/stancode/'
 
     if prior: 
@@ -33,10 +32,11 @@ def compile_model(model_num, prior, log_dir):
 
     sm = pystan.StanModel(model_code=model_code, verbose=False)
     
-    if prior:
-        save_obj(sm, 'sm_prior', log_dir)
-    else:
-        save_obj(sm, 'sm', log_dir)
+    if save:
+        if prior:
+            save_obj(sm, 'sm_prior', log_dir)
+        else:
+            save_obj(sm, 'sm', log_dir)
     return sm
 
 
@@ -57,11 +57,6 @@ def sample_prior_particles(
         sm_prior = load_obj('sm_prior', log_dir)
     
     fit_run = sm_prior.sampling(
-        # data={
-        #     'N':data['N'],
-        #     'J': data['J'],
-        #     'y' : data['y']
-        # },
         data = data,
         iter=num_samples,
         warmup=0,
@@ -127,11 +122,6 @@ def run_stan_model(
         control['stepsize'] = stepsize
 
     fit_run = compiled_model.sampling(
-        # data={
-        #     'N':data['N'],
-        #     'J': data['J'],
-        #     'y' : data['y']
-        # },
         data = data,
         iter=num_samples + num_warmup,
         warmup=num_warmup,
@@ -275,6 +265,13 @@ def essl(lw):
     """
     w = np.exp(lw - lw.max())
     return (w.sum())**2 / np.sum(w**2)
+
+
+def get_resample_index(weights, size):
+    w = exp_and_normalise(weights)
+    nw = w / np.sum(w)
+    np.testing.assert_allclose(1., nw.sum())  
+    return multinomial(nw, size)
 
 
 def resample_particles(particles):
