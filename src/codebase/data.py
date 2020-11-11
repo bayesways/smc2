@@ -172,7 +172,8 @@ def gen_data_1(
         ]
     data['stan_data'] = [
         'z',
-        'y'
+        'y',
+        'D'
         ]
     return(data)
 
