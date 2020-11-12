@@ -2,7 +2,7 @@ data {
   int<lower=1> N;
   int<lower=1> K;
   int<lower=1> J;
-  int<lower=0, upper=1> DD[N, J];
+  int<lower=0, upper=1> D[N, J];
 }
 
 parameters {
@@ -20,5 +20,5 @@ model {
   to_vector(beta) ~ normal(0, 1);
   to_vector(alpha) ~ normal(0, 10);
   to_vector(zz) ~ normal(0, 1);
-  for (j in 1:J) DD[, j] ~ bernoulli_logit(yy[, j]);
+  for (j in 1:J) D[, j] ~ bernoulli_logit(yy[, j]);
 }

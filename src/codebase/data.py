@@ -117,8 +117,6 @@ def gen_data_master(
         return gen_data_1(
             nsim_data,
             J=6,
-            K=1,
-            c=1,
             random_seed=random_seed
             )
     elif model_num == 2:
@@ -133,13 +131,16 @@ def gen_data_master(
             J=6,
             random_seed=random_seed
             )
+    elif model_num == 6:
+        return gen_data_6(
+            nsim_data,
+            random_seed=random_seed
+            )
     
 
 def gen_data_1(
     nsim_data,
     J=6,
-    K=1,
-    c=1,
     random_seed=None
     ):
     if random_seed is not None:
@@ -149,7 +150,7 @@ def gen_data_1(
     # alpha = np.zeros(J)
     beta = np.array([1, 0.7, .8, .5, .9, .6])
 
-    zz = norm.rvs(scale=c, size=nsim_data)
+    zz = norm.rvs(size=nsim_data)
     yy = alpha + np.outer(zz, beta)
     
     DD = bernoulli.rvs(p=expit(yy))
@@ -158,23 +159,14 @@ def gen_data_1(
     data = dict()
     data['random_seed'] = random_seed
     data['N'] = nsim_data
-    data['K'] = K
     data['J'] = J
     data['alpha'] = alpha
     data['beta'] = beta
-    data['sigma'] = c
     data['z'] = zz
     data['y'] = yy
     data['D'] = DD
-    data['stan_constants'] = [
-        'N',
-        'J'
-        ]
-    data['stan_data'] = [
-        'z',
-        'y',
-        'D'
-        ]
+    data['stan_constants'] = ['N','J']
+    data['stan_data'] = ['D']
     return(data)
 
 
@@ -308,4 +300,57 @@ def gen_data_4(
     data['y'] = yy
     data['off_diag_residual'] = off_diag_residual
     data['sigma_prior'] = sigma_prior
+    return(data)
+
+
+
+def gen_data_6(
+    nsim_data,
+    J=6,
+    K=2,
+    rho=0.2,
+    b=0.8,
+    rho2=0.1,
+    c=1,
+    random_seed=None
+    ):
+    if random_seed is not None:
+        np.random.seed(random_seed)
+    beta = np.array(
+        [[1, 0],
+        [b, 0],
+        [b, 0],
+        [0, 1],
+        [0, b],
+        [0, b]], dtype=float
+        )
+    alpha = np.zeros(J)
+    Phi_corr = np.eye(K)
+    Phi_corr[0, 1] = rho
+    Phi_corr[1, 0] = rho
+    Phi_cov = Phi_corr
+    assert check_posdef(Phi_cov) == 0
+    zz = multivariate_normal.rvs(
+        mean=np.zeros(K),
+        cov=Phi_cov,
+        size=nsim_data
+        )
+
+    yy = alpha + zz @ beta.T
+    DD = bernoulli.rvs(p=expit(yy))
+
+    data = dict()
+    data['random_seed'] = random_seed
+    data['N'] = nsim_data
+    data['K'] = K
+    data['J'] = J
+    data['alpha'] = alpha
+    data['beta'] = beta
+    data['Phi_cov'] = Phi_cov
+    data['z'] = zz
+    data['y'] = yy
+    data['D'] = DD
+    data['stan_constants'] = ['N','J', 'K']
+    data['stan_data'] = ['D']
+    
     return(data)
