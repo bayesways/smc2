@@ -9,7 +9,11 @@ from codebase.ibis import (
     exp_and_normalise
 )
 from codebase.ibis_tlk import gen_weights_master
-from codebase.mcmc_tlk_latent import gen_latent_weights_master, sample_latent_master
+from codebase.mcmc_tlk_latent import(
+    gen_latent_weights_master,
+    generate_latent_variables,
+    sample_zcloud
+)
 from codebase.file_utils import (
     save_obj,
     load_obj,
@@ -20,6 +24,7 @@ from codebase.resampling_routines import multinomial
 from scipy.special import logsumexp
 from scipy.stats import norm
 import pdb
+
 
 class MCMC:
     def __init__(
@@ -88,42 +93,60 @@ class MCMC:
             )
 
 
-    def sample_latent_variables(self):
-        latent_vars = dict()
-
-        # zz = np.empty(self.cloud_size)
-        # y_latent = np.empty((self.cloud_size, data['J']))
-        # for m in range(self.cloud_size):
-        zz = norm.rvs(size = self.cloud_size)
-        y_latent = np.squeeze(
-            self.particles['alpha']
-            ) + np.outer(zz, np.squeeze( self.particles['beta']))
-        
-        latent_vars['z'] = zz
-        latent_vars['y_latent'] = y_latent
+    def sample_latent_variables(self, data):
+        latent_vars = generate_latent_variables(
+            self.cloud_size,
+            data['N'],
+            data['J'],
+            self.particles['alpha'],
+            self.particles['beta']
+        )
         self.latent_particles = latent_vars
 
 
-    def get_latent_weights(self, data):
+    def get_cloud_weights(self, data):
         self.weights = gen_latent_weights_master(
             self.latent_model_num,
             data,
             self.latent_particles,
             self.cloud_size
             ) 
+    
+    
+    def sample_latent_particles_star(self, data):
+        latent_var_star = generate_latent_variables(
+            self.cloud_size,
+            data['N'],
+            data['J'],
+            self.particles['alpha'],
+            self.particles['beta'])
+        weights_star = gen_latent_weights_master(
+            self.latent_model_num,
+            data,
+            latent_var_star,
+            self.cloud_size
+        )
+        ## Accept/Reject Step 
+        logdiff = weights_star.mean(axis=0)-self.weights.mean(axis=0)
+        for t in range(data['N']):
+            u=np.random.uniform()
+            if (np.log(u) <= logdiff[t]):
+                self.latent_particles['z'][:,t] = latent_var_star['z'][:,t].copy()
+                self.latent_particles['y_latent'][:,t] = latent_var_star['y_latent'][:,t].copy()
+                self.weights[:, t] = weights_star[:, t].copy()
 
 
     def reset_weights(self):
         self.weights = np.zeros(self.cloud_size)
     
 
-    def resample_particles(self, data):
+    def sample_latent_var_given_theta(self, data):
         resample_index = np.empty(data['N'], dtype=int)
         for t in range(data['N']):
-            resample_index[t] = get_resample_index(self.weights[t], 1).astype(int)
+            resample_index[t] = get_resample_index(self.weights[:,t], 1).astype(int)
         samples=dict()
         for name in self.latent_names:
-            samples[name] = self.latent_particles[name][resample_index].copy()
+            samples[name] = self.latent_particles[name][resample_index, np.arange(data['N'])].copy()
         self.latent_particles = samples
 
 
@@ -156,7 +179,8 @@ class Data:
     def generate(self):
         self.raw_data = gen_data_master(
             self.model_num,
-            self.size
+            self.size, 
+            random_seed = self.random_seed
             )
 
     def get_stan_data(self):
