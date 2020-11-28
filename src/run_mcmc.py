@@ -48,7 +48,6 @@ particles.set_log_dir(log_dir)
 
 if args.gen_model:
     particles.compile_prior_model()
-    set_trace()
     particles.compile_model()
 else:
     particles.load_prior_model()
@@ -62,9 +61,9 @@ alphas = np.empty((nsim_mcmc, 6))
 zs = np.empty((nsim_mcmc, data_sim, 1))
 ys = np.empty((nsim_mcmc, data_sim, 6))
 
+particles.sample_latent_variables(exp_data.get_stan_data())
 
 for i in tqdm(range(nsim_mcmc)):
-    particles.sample_latent_variables(exp_data.get_stan_data())
     particles.get_bundle_weights(exp_data.get_stan_data())
     particles.sample_latent_particles_star(exp_data.get_stan_data())
     particles.sample_latent_var_given_theta(exp_data.get_stan_data())    
@@ -75,7 +74,6 @@ for i in tqdm(range(nsim_mcmc)):
     particles.sample_theta_given_z(exp_data.get_stan_data())
     alphas[i] = particles.particles['alpha']
     betas[i] = particles.particles['beta']
-    # set_trace()
     
 ps = dict()
 ps['alpha'] = alphas
