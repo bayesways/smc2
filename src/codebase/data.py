@@ -113,7 +113,7 @@ def gen_data_master(
     c=1,
     random_seed=None
     ):
-    if model_num == 1:
+    if model_num == 1: #1 factor model for binary data
         return gen_data_1(
             nsim_data,
             J=6,
@@ -143,6 +143,9 @@ def gen_data_1(
     J=6,
     random_seed=None
     ):
+    """
+    1 factor model for binary data
+    """
     if random_seed is not None:
         np.random.seed(random_seed)
 
@@ -160,12 +163,13 @@ def gen_data_1(
     data['random_seed'] = random_seed
     data['N'] = nsim_data
     data['J'] = J
+    data['K'] = 1
     data['alpha'] = alpha
     data['beta'] = beta
     data['z'] = zz
     data['y'] = yy
     data['D'] = DD
-    data['stan_constants'] = ['N','J']
+    data['stan_constants'] = ['N', 'J', 'K']
     data['stan_data'] = ['D']
     return(data)
 
