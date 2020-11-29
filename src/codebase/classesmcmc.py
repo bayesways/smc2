@@ -63,6 +63,7 @@ class MCMC:
             self.log_dir
             )
 
+
     def compile_prior_model(self):
         self.compiled_prior_model = compile_model(
             model_num=self.model_num,
@@ -82,6 +83,7 @@ class MCMC:
 
 
     def sample_prior_particles(self, data):
+        self.acceptance = np.zeros(data['N'])
         self.particles = sample_prior_particles(
             data = data,
             gen_model = False,
@@ -133,6 +135,7 @@ class MCMC:
         for t in range(data['N']):
             u=np.random.uniform()
             if (np.log(u) <= logdiff[t]):
+                self.acceptance[t] += 1
                 self.latent_particles['z'][:,t] = latent_var_star['z'][:,t].copy()
                 self.latent_particles['y_latent'][:,t] = latent_var_star['y_latent'][:,t].copy()
                 self.weights[:, t] = weights_star[:, t].copy()

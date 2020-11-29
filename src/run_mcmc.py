@@ -55,7 +55,7 @@ else:
 
 particles.sample_prior_particles(exp_data.get_stan_data())
 
-nsim_mcmc = 100
+nsim_mcmc = 500
 betas = np.empty((nsim_mcmc, 6, 1))
 alphas = np.empty((nsim_mcmc, 6))
 zs = np.empty((nsim_mcmc, data_sim, 1))
@@ -80,4 +80,5 @@ ps['alpha'] = alphas
 ps['beta'] = betas
 ps['z'] = zs
 ps['y'] = ys
+ps['accs'] = particles.acceptance
 save_obj(ps, 'mcmc_post_samples', log_dir)

@@ -39,9 +39,8 @@ def get_latent_weights_1(
         for t in range(data['N']):
             weights[m,t] = bernoulli.logpmf(
                 data['D'][t],
-                p=expit(latent_particles['y_latent'][m])
+                p=expit(latent_particles['y_latent'][m,t])
             ).sum()
-    # return np.mean(weights,axis=1)
     return weights
 
 
