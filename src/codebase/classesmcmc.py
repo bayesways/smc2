@@ -12,7 +12,7 @@ from codebase.ibis_tlk import gen_weights_master
 from codebase.mcmc_tlk_latent import(
     gen_latent_weights_master,
     generate_latent_variables,
-    sample_zcloud
+    generate_latent_variables_bundle,
 )
 from codebase.file_utils import (
     save_obj,
@@ -34,7 +34,7 @@ class MCMC:
         nsim,
         param_names,
         latent_names, 
-        cloud_size,
+        bundle_size,
         latent_model_num
         ):
         self.name = name
@@ -42,7 +42,7 @@ class MCMC:
         self.size = nsim
         self.param_names = param_names
         self.latent_names = latent_names
-        self.cloud_size = cloud_size
+        self.bundle_size = bundle_size
         self.latent_model_num = latent_model_num
 
 
@@ -63,6 +63,7 @@ class MCMC:
             self.log_dir
             )
 
+
     def compile_prior_model(self):
         self.compiled_prior_model = compile_model(
             model_num=self.model_num,
@@ -82,6 +83,7 @@ class MCMC:
 
 
     def sample_prior_particles(self, data):
+        self.acceptance = np.zeros(data['N'])
         self.particles = sample_prior_particles(
             data = data,
             gen_model = False,
@@ -94,50 +96,53 @@ class MCMC:
 
 
     def sample_latent_variables(self, data):
-        latent_vars = generate_latent_variables(
-            self.cloud_size,
+        latent_vars = generate_latent_variables_bundle(
+            self.bundle_size, # don't need
             data['N'],
             data['J'],
+            1, # number of factors
             self.particles['alpha'],
             self.particles['beta']
         )
         self.latent_particles = latent_vars
 
 
-    def get_cloud_weights(self, data):
+    def get_bundle_weights(self, data):
         self.weights = gen_latent_weights_master(
             self.latent_model_num,
             data,
             self.latent_particles,
-            self.cloud_size
+            self.bundle_size
             ) 
     
     
     def sample_latent_particles_star(self, data):
-        latent_var_star = generate_latent_variables(
-            self.cloud_size,
+        latent_var_star = generate_latent_variables_bundle(
+            self.bundle_size,
             data['N'],
             data['J'],
+            data['K'], # number of factors
             self.particles['alpha'],
             self.particles['beta'])
         weights_star = gen_latent_weights_master(
             self.latent_model_num,
             data,
             latent_var_star,
-            self.cloud_size
+            self.bundle_size
         )
         ## Accept/Reject Step 
         logdiff = weights_star.mean(axis=0)-self.weights.mean(axis=0)
         for t in range(data['N']):
             u=np.random.uniform()
             if (np.log(u) <= logdiff[t]):
+                self.acceptance[t] += 1
                 self.latent_particles['z'][:,t] = latent_var_star['z'][:,t].copy()
                 self.latent_particles['y_latent'][:,t] = latent_var_star['y_latent'][:,t].copy()
                 self.weights[:, t] = weights_star[:, t].copy()
 
 
     def reset_weights(self):
-        self.weights = np.zeros(self.cloud_size)
+        self.weights = np.zeros(self.bundle_size)
     
 
     def sample_latent_var_given_theta(self, data):
@@ -147,12 +152,12 @@ class MCMC:
         samples=dict()
         for name in self.latent_names:
             samples[name] = self.latent_particles[name][resample_index, np.arange(data['N'])].copy()
-        self.latent_particles = samples
+        self.latent_mcmc_sample = samples
 
 
     def sample_theta_given_z(self, data):
         mcmc_data = data.copy()
-        mcmc_data['z'] = self.latent_particles['z'].copy()
+        mcmc_data['zz'] = self.latent_mcmc_sample['z'].copy()
 
         fit_run = run_mcmc(
             data = mcmc_data,

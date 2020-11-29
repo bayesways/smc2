@@ -1,6 +1,7 @@
 data{
   int<lower=0> N;
   int<lower=0> J;
+  int<lower=0> K;
   int<lower=0, upper=1> D[N,J];
 }
 
@@ -11,7 +12,9 @@ transformed data{
 
 generated quantities{
   vector[J] alpha;
-  vector[J] beta;
+  matrix[J,K] beta;
   for (j in 1:J) alpha[j] = normal_rng(0,1);
-  for (j in 1:J) beta[j] = normal_rng(0,1);
+  for (j in 1:J){
+    for (k in 1:K)  beta[j,k] = normal_rng(0,1);
+  }
 }
