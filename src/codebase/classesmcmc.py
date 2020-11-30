@@ -158,7 +158,6 @@ class MCMC:
     def sample_theta_given_z(self, data):
         mcmc_data = data.copy()
         mcmc_data['zz'] = self.latent_mcmc_sample['z'].copy()
-
         fit_run = run_mcmc(
             data = mcmc_data,
             gen_model = False,
