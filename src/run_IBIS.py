@@ -62,7 +62,7 @@ degeneracy_limit = 0.5
 for t in tqdm(range(exp_data.size)):
     particles.get_incremental_weights(
         exp_data.get_stan_data_at_t(t)
-    )
+        )
     log_lklhds[t] =  particles.get_loglikelihood_estimate()
     particles.update_weights()
     
