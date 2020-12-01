@@ -7,7 +7,7 @@ from codebase.file_utils import (
     make_folder,
     path_backslash
 )
-from codebase.ibis import essl, exp_and_normalise
+from codebase.ibis import essl, exp_and_normalise, model_phonebook
 from tqdm import tqdm
 from scipy.special import logsumexp
 
@@ -37,19 +37,20 @@ else:
 # generate data
 exp_data = Data(
     name = args.task_handle, 
-    model_num = 2, 
+    model_num = 4, 
     size = 50,
     random_seed = 0
     )
     
 exp_data.generate()
 
+model_num = 1
 ## setup particles
-param_names = ['Marg_cov', 'L_R', 'alpha', 'sigma']
-latent_names = []
+param_names = model_phonebook(model_num)['param_names']
+latent_names = model_phonebook(model_num)['latent_names']
 particles = Particles(
     name = 'normal',
-    model_num = 2,
+    model_num = model_num,
     size = 10,
     param_names = param_names,
     latent_names = latent_names)
@@ -75,7 +76,6 @@ for t in tqdm(range(exp_data.size)):
     if (essl(particles.weights) < degeneracy_limit * particles.size) and (t+1) < exp_data.size:
         particles.resample_particles()
         particles.jitter(exp_data.get_stan_data_upto_t(t+1))
-
         particles.reset_weights()
     else:
         particles.update_weights()

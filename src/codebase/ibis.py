@@ -1,4 +1,5 @@
 import  pystan
+import sys, os
 import argparse
 import numpy as np
 from codebase.file_utils import (
@@ -14,48 +15,87 @@ from tqdm import tqdm
 import pdb
 
 
-def compile_model(model_num, prior, log_dir, save=True):
+def model_phonebook_path(model_num, prior):
     path_to_stan = './codebase/stancode/'
 
-    if prior: 
-        with open('%spriors/model_%s.stan'%(
-        path_to_stan,
-        model_num
-        ), 'r') as file:
-            model_code = file.read()
-    else:
-        with open('%smodels/model_%s.stan'%(
-        path_to_stan,
-        model_num
-        ), 'r') as file:
-            model_code = file.read()
+    if model_num == 0:
+        if prior:
+            path = 'saturated/model_0_prior.stan'
+        else:
+            path = 'saturated/model_0.stan'
 
+    elif model_num == 1:
+        if prior:
+            path = 'CFA/model_1_prior.stan'
+        else:
+            path = 'CFA/model_1.stan'
+    else:
+        print("model number not found")
+        sys.exit()
+
+    return path_to_stan+path
+
+
+def model_phonebook(model_num):
+    names = dict()
+
+    if model_num == 0:
+        names['param_names'] = ['Marg_cov', 'L_R', 'alpha', 'sigma']
+        names['latent_names'] = []
+    elif model_num == 1:
+        names['param_names'] = [
+            # 'Phi_cov',
+            # 'beta_free',
+            'alpha',
+            # 'sigma_square',
+            'Marg_cov',
+            'beta']
+        names['latent_names'] = []
+    else:
+        print("model number not found")
+        sys.exit()
+
+    return names
+
+
+def compile_model(model_num, prior, log_dir, save=True):
+    
+    model_bank_path = "./log/compiled_models/model%s/"%model_num
+    if not os.path.exists(model_bank_path):
+        os.makedirs(model_bank_path)
+
+    with open(
+        model_phonebook_path(model_num, prior),
+        'r'
+        ) as file:
+        model_code = file.read()
+    
     sm = pystan.StanModel(model_code=model_code, verbose=False)
     
     if save:
         if prior:
             save_obj(sm, 'sm_prior', log_dir)
+            save_obj(sm, 'sm_prior', model_bank_path)
+            file = open('%smodel_prior.txt'%model_bank_path, "w")
+            file.write(model_code)
+            file.close()
         else:
             save_obj(sm, 'sm', log_dir)
+            save_obj(sm, 'sm', model_bank_path)
+            file = open('%smodel.txt'%model_bank_path, "w")
+            file.write(model_code)
+            file.close()
     return sm
 
 
 def sample_prior_particles(
     data,
-    gen_model,
-    model_num,
+    sm_prior,
     param_names,
     num_samples, 
     num_chains, 
     log_dir
-    ):
-
-    if gen_model:
-        sm_prior = compile_model(model_num, True, log_dir)
-        save_obj(sm_prior, 'sm_prior', log_dir)
-    else:
-        sm_prior = load_obj('sm_prior', log_dir)
-    
+    ):    
     fit_run = sm_prior.sampling(
         data = data,
         iter=num_samples,
@@ -137,8 +177,7 @@ def run_stan_model(
 
 def run_mcmc(
     data,
-    gen_model,
-    model_num,
+    sm,
     num_samples, 
     num_warmup,
     num_chains,
@@ -150,12 +189,6 @@ def run_mcmc(
     adapt_engaged = False,
     stepsize = None
     ):
-
-    if gen_model:
-        sm = compile_model(model_num, False, log_dir)
-        save_obj(sm, 'sm', log_dir)
-    else:
-        sm = load_obj('sm', log_dir)
 
     if load_inv_metric:
         inv_metric = load_obj('inv_metric', log_dir)

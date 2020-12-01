@@ -42,14 +42,14 @@ class Particles:
     def load_prior_model(self):
         self.compiled_prior_model = load_obj(
             'sm_prior',
-            self.log_dir
+            "./log/compiled_models/model%s/"%self.model_num
             )
 
 
     def load_model(self):
         self.compiled_model = load_obj(
             'sm',
-            self.log_dir
+            "./log/compiled_models/model%s/"%self.model_num
             )
 
     def compile_prior_model(self):
@@ -73,8 +73,7 @@ class Particles:
     def sample_prior_particles(self, data):
         self.particles = sample_prior_particles(
             data = data,
-            gen_model = False,
-            model_num = self.model_num,
+            sm_prior = self.compiled_prior_model,
             param_names = self.param_names,
             num_samples = self.size, 
             num_chains = 1, 
@@ -119,8 +118,7 @@ class Particles:
     def jitter_and_save_mcmc_parms(self, data, m=0):
         fit_run = run_mcmc(
             data = data,
-            gen_model = False,
-            model_num = self.model_num,
+            sm = self.compiled_model,
             num_samples = 20, 
             num_warmup = 1000,
             num_chains = 1,
@@ -139,8 +137,7 @@ class Particles:
     def jitter_with_used_mcmc_params(self, data, m):        
         fit_run = run_mcmc(
             data = data,
-            gen_model = False,
-            model_num = self.model_num,
+            sm = self.compiled_model,
             num_samples = 20, 
             num_warmup = 0,
             num_chains = 1,

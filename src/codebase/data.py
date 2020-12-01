@@ -125,10 +125,11 @@ def gen_data_master(
             J=6,
             random_seed=random_seed
             )
-    elif model_num == 3:
-        return gen_data_3(
+    elif model_num == 4:
+        return gen_data_4(
             nsim_data,
             J=6,
+            K=2,
             random_seed=random_seed
             )
     elif model_num == 6:
@@ -304,6 +305,8 @@ def gen_data_4(
     data['y'] = yy
     data['off_diag_residual'] = off_diag_residual
     data['sigma_prior'] = sigma_prior
+    data['stan_constants'] = ['N','J', 'K', 'sigma_prior']
+    data['stan_data'] = ['y']
     return(data)
 
 

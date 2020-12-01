@@ -9,19 +9,24 @@ def gen_weights_master(
     particles,
     M
     ):
-    if model_num == 1:
-        pass
-    elif model_num == 2:
-        return get_weights_2(
+    if model_num == 0:
+        return get_weights_0(
             data,
             particles,
             M
             )
-    elif model_num == 3:
+    elif model_num == 1:
+        return get_weights_0(
+            data,
+            particles,
+            M
+            )
+
+    else:
         pass
+    
 
-
-def get_weights_2(data, particles, M):
+def get_weights_0(data, particles, M):
     """
     dim(y) = k 
 
