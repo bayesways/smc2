@@ -24,13 +24,13 @@ class Particles:
         self,
         name,
         model_num,
-        nsim,
+        size,
         param_names,
         latent_names
         ):
         self.name = name
         self.model_num = model_num
-        self.size = nsim
+        self.size = size
         self.param_names = param_names
         self.latent_names = latent_names
 
@@ -156,9 +156,12 @@ class Particles:
 
 
     def jitter(self, data):
-        self.jitter_and_save_mcmc_parms(data, 0)
-        for m in range(1, self.size):
-            self.jitter_with_used_mcmc_params(data, m)
+        if self.model_num != 8:
+            self.jitter_and_save_mcmc_parms(data, 0)
+            for m in range(1, self.size):
+                self.jitter_with_used_mcmc_params(data, m)
+        else:
+            pass
 
 
     def get_loglikelihood_estimate(self):
@@ -245,10 +248,10 @@ class ParticlesLatent(Particles):
 
 
 class Data:
-    def __init__(self, name, model_num, nsim, random_seed=None):
+    def __init__(self, name, model_num, size, random_seed=None):
         self.name = name
         self.model_num = model_num
-        self.size = nsim 
+        self.size = size 
         self.random_seed = random_seed
 
     def generate(self):

@@ -35,18 +35,24 @@ else:
     print("\n\nReading from existing directory: %s" % log_dir)
 
 # generate data
-exp_data = Data(args.task_handle, args.model_num, 50, 0)
+exp_data = Data(
+    name = args.task_handle, 
+    model_num = 2, 
+    size = 50,
+    random_seed = 0
+    )
+    
 exp_data.generate()
 
 ## setup particles
 param_names = ['Marg_cov', 'L_R', 'alpha', 'sigma']
 latent_names = []
 particles = Particles(
-    'normal',
-    args.model_num,
-    10,
-    param_names,
-    latent_names)
+    name = 'normal',
+    model_num = 2,
+    size = 10,
+    param_names = param_names,
+    latent_names = latent_names)
 particles.set_log_dir(log_dir)
 if args.gen_model:
     particles.compile_prior_model()
