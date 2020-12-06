@@ -44,12 +44,13 @@ def model_phonebook(model_num):
         names['latent_names'] = []
     elif model_num == 1:
         names['param_names'] = [
-            # 'Phi_cov',
-            # 'beta_free',
+            'sigma_square',
             'alpha',
-            # 'sigma_square',
+            'beta_free',
+            'Phi_cov',
             'Marg_cov',
-            'beta']
+            'beta',
+            ]
         names['latent_names'] = []
     else:
         print("model number not found")

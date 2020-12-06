@@ -121,7 +121,7 @@ class Particles:
             sm = self.compiled_model,
             num_samples = 20, 
             num_warmup = 1000,
-            num_chains = 1,
+            num_chains = 1, # don't change
             log_dir = self.log_dir,
             initial_values = self.get_particles_at_position_m(m),
             load_inv_metric= False, 
@@ -140,7 +140,7 @@ class Particles:
             sm = self.compiled_model,
             num_samples = 20, 
             num_warmup = 0,
-            num_chains = 1,
+            num_chains = 1, # don't change
             log_dir = self.log_dir,
             initial_values = self.get_particles_at_position_m(m),
             inv_metric= self.mass_matrix,

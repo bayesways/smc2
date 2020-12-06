@@ -92,4 +92,4 @@ for name in ['alpha', 'Marg_cov']:
     print('\n\nEstimate')
     print(np.round(np.average(samples,axis=0, weights=w),2))
     print('\nRead Data')
-    print(exp_data.raw_data[name])
+    print(np.round(exp_data.raw_data[name],2))
