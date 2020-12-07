@@ -29,6 +29,11 @@ def model_phonebook_path(model_num, prior):
             path = 'CFA/model_1_prior.stan'
         else:
             path = 'CFA/model_1.stan'
+    elif model_num == 2:
+        if prior:
+            path = 'CFA/model2_big5_prior.stan'
+        else:
+            path = 'CFA/model2_big5.stan'    
     else:
         print("model number not found")
         sys.exit()
@@ -50,6 +55,17 @@ def model_phonebook(model_num):
             'Phi_cov',
             'Marg_cov',
             'beta',
+            ]
+    elif model_num == 2:
+        names['param_names'] = [
+            'sigma_square',
+            'alpha',
+            'beta_free',
+            'beta_zeros',
+            'Phi_cov',
+            'Marg_cov',
+            'beta',
+            'Omega'
             ]
         names['latent_names'] = []
     else:

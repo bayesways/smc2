@@ -21,7 +21,12 @@ def gen_weights_master(
             particles,
             M
             )
-
+    elif model_num == 2:
+        return get_weights_0(
+            data,
+            particles,
+            M
+            )
     else:
         pass
     

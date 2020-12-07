@@ -37,21 +37,21 @@ else:
 # generate data
 exp_data = Data(
     name = args.task_handle, 
-    model_num = 4, 
+    model_num = 'big5', 
     size = 50,
     random_seed = 0
     )
     
 exp_data.generate()
 
-model_num = 1
+model_num = 2
 ## setup particles
 param_names = model_phonebook(model_num)['param_names']
 latent_names = model_phonebook(model_num)['latent_names']
 particles = Particles(
     name = 'normal',
     model_num = model_num,
-    size = 10,
+    size = 1000,
     param_names = param_names,
     latent_names = latent_names)
 particles.set_log_dir(log_dir)
@@ -91,5 +91,5 @@ for name in ['alpha', 'Marg_cov']:
     w = exp_and_normalise(particles.weights)
     print('\n\nEstimate')
     print(np.round(np.average(samples,axis=0, weights=w),2))
-    print('\nRead Data')
-    print(np.round(exp_data.raw_data[name],2))
+    # print('\nRead Data')
+    # print(np.round(exp_data.raw_data[name],2))

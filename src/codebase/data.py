@@ -137,7 +137,36 @@ def gen_data_master(
             nsim_data,
             random_seed=random_seed
             )
+    elif model_num == 'big5':
+        return get_big5()
+        
     
+
+def get_big5():
+    standardize = 1
+    gender = 'women'
+    
+    print("\n\nReading data for %s"%gender)
+    df = pd.read_csv("../dat/muthen_"+gender+".csv")
+    df = df.replace(-9, np.nan).astype(float)
+    df.dropna(inplace=True)
+    df = df.astype(int)
+    data = dict()
+    data['N'] = df.shape[0]
+    data['K'] = 5
+    data['J'] = df.shape[1]
+    if standardize:
+        from sklearn import preprocessing
+        data['y'] = preprocessing.scale(df.values)
+    else:
+        data['y'] = df.values
+    print("\n\nN = %d, J= %d, K =%d"%(data['N'],data['J'], data['K'] ))
+    data['sigma_prior'] = np.diag(np.linalg.inv(np.cov(data['y'], rowvar=False)))
+    data['stan_constants'] = ['N','J', 'K', 'sigma_prior']
+    data['stan_data'] = ['y']
+    return data
+
+
 
 def gen_data_1(
     nsim_data,
@@ -172,7 +201,7 @@ def gen_data_1(
     data['D'] = DD
     data['stan_constants'] = ['N', 'J', 'K']
     data['stan_data'] = ['D']
-    return(data)
+    return data
 
 
 def gen_data_2(
