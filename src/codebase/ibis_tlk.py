@@ -15,19 +15,14 @@ def gen_weights_master(
             particles,
             M
             )
-    elif model_num == 1:
-        return get_weights_0(
-            data,
-            particles,
-            M
-            )
-    elif model_num == 2:
+    elif model_num in[1,2,3,4]:
         return get_weights_0(
             data,
             particles,
             M
             )
     else:
+        print('No weights method found for this model number')
         pass
     
 

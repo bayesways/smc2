@@ -386,7 +386,7 @@ def gen_data_6(
     data['z'] = zz
     data['y'] = yy
     data['D'] = DD
-    data['stan_constants'] = ['N','J', 'K']
+    data['stan_constants'] = ['N','J','K']
     data['stan_data'] = ['D']
     
     return(data)

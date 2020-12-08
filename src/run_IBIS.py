@@ -37,21 +37,21 @@ else:
 # generate data
 exp_data = Data(
     name = args.task_handle, 
-    model_num = 'big5', 
-    size = 50,
+    model_num = 4, 
+    size = 10,
     random_seed = 0
     )
     
 exp_data.generate()
 
-model_num = 2
+model_num = 4
 ## setup particles
 param_names = model_phonebook(model_num)['param_names']
 latent_names = model_phonebook(model_num)['latent_names']
 particles = Particles(
     name = 'normal',
     model_num = model_num,
-    size = 1000,
+    size = 10,
     param_names = param_names,
     latent_names = latent_names)
 particles.set_log_dir(log_dir)
