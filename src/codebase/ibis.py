@@ -41,6 +41,11 @@ def model_phonebook_path(model_num, prior):
             path = 'CFA/model_2.stan'
     elif model_num == 4:
         if prior:
+            path = 'EFA/model_1_prior.stan'
+        else:
+            path = 'EFA/model_1.stan'
+    elif model_num == 5:
+        if prior:
             path = 'EFA/model_2_prior.stan'
         else:
             path = 'EFA/model_2.stan'
@@ -96,7 +101,7 @@ def model_phonebook(model_num):
             'sigma_square',
             'alpha',
             'Marg_cov',
-            'beta',
+            'beta'
             ]
         names['latent_names'] = []
     elif model_num == 5:
@@ -268,49 +273,6 @@ def run_mcmc(
         save_obj(inv_metric, 'inv_metric', log_dir)
 
     return fit_run
-
-
-def jitter(data, particles, log_dir):
-
-    m=0
-    fit_run = run_mcmc(
-        data = data,
-        gen_model = False,
-        model_num = 0,
-        num_samples = 20, 
-        num_warmup = 1000,
-        num_chains = 1,
-        log_dir = log_dir,
-        initial_values = get_initial_values_dict(particles, m),
-        load_inv_metric= False, 
-        adapt_engaged = True
-        )
-
-    last_position = fit_run.get_last_position()[0] # select chain 1
-    mass_matrix = fit_run.get_inv_metric(as_dict=True)
-    stepsize = fit_run.get_stepsize()
-
-    particles = set_last_position(particles, m, last_position)
-
-    for m in range(1, particles['M']):
-        fit_run = run_mcmc(
-            data = data,
-            gen_model = False,
-            model_num = 0,
-            num_samples = 20, 
-            num_warmup = 0,
-            num_chains = 1,
-            log_dir = log_dir,
-            initial_values = get_initial_values_dict(particles, m),
-            inv_metric= mass_matrix,
-            adapt_engaged=False,
-            stepsize = stepsize
-            )
-        last_position = fit_run.get_last_position()[0] # select chain 1
-
-        particles = set_last_position(particles, m, last_position)
-
-    return particles
 
 
 def exp_and_normalise(lw):

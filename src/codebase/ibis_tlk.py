@@ -15,7 +15,7 @@ def gen_weights_master(
             particles,
             M
             )
-    elif model_num in[1,2,3,4]:
+    elif model_num in[1,2,3,4,5]:
         return get_weights_0(
             data,
             particles,

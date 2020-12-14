@@ -30,7 +30,7 @@ model {
   to_vector(alpha) ~ normal(0, 10);
   for(j in 1:J) sigma_square[j] ~ inv_gamma(c0, (c0-1)/sigma_prior[j]);
   for (n in 1:N){
-    yy[n, ] ~ multi_normal(alpha,  Marg_cov);
+    y[n, ] ~ multi_normal(alpha,  Marg_cov);
   }
 }
 
