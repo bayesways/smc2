@@ -1,6 +1,6 @@
 import numpy as np
 import pandas as pd
-from scipy.stats import multivariate_normal, norm, bernoulli
+from scipy.stats import multivariate_normal, norm, bernoulli, uniform
 from numpy.linalg import inv,cholesky
 from scipy.special import expit, logit
 
@@ -26,43 +26,19 @@ def gen_cov_matrix(dim, scale = 1., random_seed = None):
     return C
 
 
-def flatten_corr_matrix_samples(Rs, offset = 0, colnames=None):
+def flatten_matrix(a, include_diag = True):
     """
-    Flatten a [N, K, K ] array of correlation
-    matrix samples to a [N,M] array where
-    M is the number of of elements below the
+    Flatten a [K, K ] correlation
+    matrix to [M,] array where
+    M is the number of of elements above the
     diagonal for a K by K matrix.
-
-    For each sample correlation matrix we care only
-    for these M parameters
     Inputs
-    ============
-    - Rs : samples to flattent out, should be
-        of dimension [N,K,K]
-    - offset : set 1 to exclude diagonal
-    - colnames
-    Output
-    ============
-    -  a dataframe of size [N,M]
     """
-    N,K = Rs.shape[0], Rs.shape[1]
-    if colnames is None:
-        colnames = [str(x) for x in range(K)]
-
-    assert len(colnames) == K, 'colnames should as long as the columns of R'
-    cnames = corr_headers(colnames, offset = offset)
-
-    M = len(cnames)
-    fRs = np.empty((N,M))
-    for i in range (N):
-        fRs[i,:] = flatten_corr(Rs[i,:,:], offset = offset)
-
-    fRs = pd.DataFrame(fRs)
-    fRs.columns=cnames
-
-
-    return fRs
-
+    if include_diag:
+        offset = 0
+    else:
+        offset = 1
+    return a[np.triu_indices(a.shape[0], k=offset)]
 
 
 def C_to_R(M):
