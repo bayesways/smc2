@@ -53,14 +53,14 @@ class MCMC:
     def load_prior_model(self):
         self.compiled_prior_model = load_obj(
             'sm_prior',
-            self.log_dir
+            "./log/compiled_models/model%s/"%self.model_num
             )
 
 
     def load_model(self):
         self.compiled_model = load_obj(
             'sm',
-            self.log_dir
+            "./log/compiled_models/model%s/"%self.model_num
             )
 
 
@@ -86,8 +86,7 @@ class MCMC:
         self.acceptance = np.zeros(data['N'])
         self.particles = sample_prior_particles(
             data = data,
-            gen_model = False,
-            model_num = self.model_num,
+            sm_prior = self.compiled_prior_model,
             param_names = self.param_names,
             num_samples = self.size, 
             num_chains = 1, 
@@ -160,8 +159,7 @@ class MCMC:
         mcmc_data['zz'] = self.latent_mcmc_sample['z'].copy()
         fit_run = run_mcmc(
             data = mcmc_data,
-            gen_model = False,
-            model_num = self.model_num,
+            sm = self.compiled_model,
             num_samples = 10, 
             num_warmup = 1000,
             num_chains = 1,

@@ -5,27 +5,6 @@ from numpy.linalg import inv,cholesky
 from scipy.special import expit, logit
 
 
-def gen_cov_matrix(dim, scale = 1., random_seed = None):
-    """
-    Return covariance matrix with values scaled according
-    to the input scale.
-    Inputs
-    ============
-    - dim
-    - scale
-
-    Output
-    ============
-    - np. array of shape (dim, dim)
-    """
-    if random_seed is not None:
-        np.random.seed(random_seed)
-
-    A = np.tril(uniform(-scale,scale,size = (dim,dim)))
-    C = A @ A.T
-    return C
-
-
 def flatten_matrix(a, include_diag = True):
     """
     Flatten a [K, K ] correlation
