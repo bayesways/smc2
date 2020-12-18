@@ -37,14 +37,14 @@ else:
 # generate data
 exp_data = Data(
     name = args.task_handle, 
-    model_num = 'big5',  
-    size = 10,
+    model_num = 4,  
+    size = 400,
     random_seed = 0
     )
     
 exp_data.generate()
 
-model_num = 4
+model_num = 3
 
 ibis = run_ibis(
     exp_data,
