@@ -68,6 +68,8 @@ def gen_data_master(
     c=1,
     random_seed=None
     ):
+    if random_seed is None: 
+        random_seed = 0
     if model_num == 1: #1 factor model for binary data
         return gen_data_1(
             nsim_data,

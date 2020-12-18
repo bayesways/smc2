@@ -13,22 +13,21 @@ def model_phonebook_path(model_num, prior, data_type='cont'):
             path = 'saturated/model_0_prior.stan'
         else:
             path = 'saturated/model_0.stan'
-
     elif model_num == 1:
         if prior:
-            path = 'CFA/model_1_prior.stan'
+            path = 'CFA/EZ/model_1_prior.stan'
         else:
-            path = 'CFA/model_1.stan'
+            path = 'CFA/EZ/model_1.stan'
     elif model_num == 2:
         if prior:
-            path = 'CFA/model2_big5_prior.stan'
+            path = 'CFA/AZ/model2_big5_prior.stan'
         else:
-            path = 'CFA/model2_big5.stan'   
+            path = 'CFA/AZ/model2_big5.stan'   
     elif model_num == 3:
         if prior:
-            path = 'CFA/model_2_prior.stan'
+            path = 'CFA/AZ/model_2_prior.stan'
         else:
-            path = 'CFA/model_2.stan'
+            path = 'CFA/AZ/model_2.stan'
     elif model_num == 4:
         if prior:
             path = 'EFA/model_1_prior.stan'
@@ -44,6 +43,11 @@ def model_phonebook_path(model_num, prior, data_type='cont'):
             path = 'ibis/model_7_prior.stan'
         else:
             path = 'ibis/model_7.stan'
+    elif model_num == 8:
+        if prior:
+            path = 'CFA/EZ/model_1_b_prior.stan'
+        else:
+            path = 'CFA/EZ/model_1_b.stan'
     else:
         print("model number not found")
         sys.exit()

@@ -253,8 +253,9 @@ class Data:
 
     def generate(self):
         self.raw_data = gen_data_master(
-            self.model_num,
-            self.size
+            model_num = self.model_num,
+            nsim_data = self.size,
+            random_seed = self.random_seed
             )
 
     def get_stan_data(self):
