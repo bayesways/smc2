@@ -1,5 +1,4 @@
 import numpy as np
-from codebase.data import gen_data_master
 from codebase.ibis import (
     compile_model,
     sample_prior_particles, 

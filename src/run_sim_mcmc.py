@@ -38,7 +38,7 @@ data_sim = 100
 exp_data = Data(
     name = "1factorlogit",
     model_num=1, 
-    size=10,
+    size=100,
     random_seed=4
 )
 
@@ -49,7 +49,7 @@ param_names = ['beta', 'alpha']
 latent_names = ['z', 'y_latent']
 ps = run_mcmc(
     exp_data=exp_data,
-    nsim_mcmc=10,
+    nsim_mcmc=500,
     model_num=7,
     bundle_size=50,
     gen_model=args.gen_model,

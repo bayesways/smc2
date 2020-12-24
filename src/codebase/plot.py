@@ -1,8 +1,6 @@
 import pandas as pd
 import numpy as np
 import altair as alt
-alt.data_transformers.disable_max_rows()
-
 
 def form_df(samples, num_chains, rows):
     dfs = []
@@ -36,6 +34,8 @@ def get_post_df(samples):
 
 
 def plot_density(df, width=300, height=50) :
+    # it only works for one chain for now
+    assert df.chain.unique().shape[0] == 1
     return alt.Chart(df).transform_fold(
         ['value']
     ).transform_density(
@@ -53,6 +53,8 @@ def plot_density(df, width=300, height=50) :
 
 
 def plot_line(df, width=300, height=50) :
+    # it only works for one chain for now
+    assert df.chain.unique().shape[0] == 1
     return alt.Chart(df).mark_line(
         strokeWidth = 1,
         ).encode(
