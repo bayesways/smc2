@@ -44,7 +44,7 @@ exp_data = Data(
     
 exp_data.generate()
 
-model_num = 1
+model_num = 3
 
 ibis = run_ibis(
     exp_data,
