@@ -1,4 +1,5 @@
 from codebase.classes_data import Data
+from run_mcmc import run_mcmc
 import argparse
 import numpy as np
 from codebase.file_utils import (
@@ -7,10 +8,8 @@ from codebase.file_utils import (
     make_folder,
     path_backslash
 )
-from codebase.ibis import exp_and_normalise
-from run_ibis import run_ibis
-from scipy.special import logsumexp
-
+from tqdm.notebook import tqdm
+from pdb import set_trace
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-th", "--task_handle",
@@ -35,29 +34,28 @@ else:
     print("\n\nReading from existing directory: %s" % log_dir)
 
 # generate data
+data_sim = 100
 exp_data = Data(
-    name = args.task_handle, 
-    model_num = 4,  
-    size = 10,
-    random_seed = 0
-    )
-    
+    name = "1factorlogit",
+    model_num=1, 
+    size=100,
+    random_seed=4
+)
+
 exp_data.generate()
+save_obj(exp_data, 'data', log_dir)
 
-model_num = 3
+param_names = ['beta', 'alpha']
+latent_names = ['z', 'y_latent']
+ps = run_mcmc(
+    exp_data=exp_data,
+    nsim_mcmc=500,
+    model_num=7,
+    bundle_size=50,
+    gen_model=args.gen_model,
+    param_names=param_names,
+    latent_names=latent_names,
+    log_dir=log_dir
+)
 
-ibis = run_ibis(
-    exp_data,
-    model_num,
-    10,
-    args.gen_model,
-    log_dir
-    )
-
-for name in ['alpha', 'Marg_cov']:
-    samples = np.squeeze(ibis['particles'].particles[name])
-    w = exp_and_normalise(ibis['particles'].weights)
-    print('\n\nEstimate')
-    print(np.round(np.average(samples,axis=0, weights=w),2))
-    # print('\nRead Data')
-    # print(np.round(exp_data.raw_data[name],2))
+save_obj(ps, 'mcmc_post_samples', log_dir)
