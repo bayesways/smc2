@@ -1,4 +1,4 @@
-from codebase.classes import Data
+from codebase.classes_data import Data
 import argparse
 import numpy as np
 from codebase.file_utils import (

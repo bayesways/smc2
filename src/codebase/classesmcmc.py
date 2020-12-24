@@ -169,44 +169,4 @@ class MCMC:
         last_position = fit_run.get_last_position()[0] # select chain 1
         for name in self.param_names:
             self.particles[name] = last_position[name]
-    
-
-class Data:
-    def __init__(self, name, model_num, nsim, random_seed=None):
-        self.name = name
-        self.model_num = model_num
-        self.size = nsim 
-        self.random_seed = random_seed
-
-    def generate(self):
-        self.raw_data = gen_data_master(
-            self.model_num,
-            self.size, 
-            random_seed = self.random_seed
-            )
-
-    def get_stan_data(self):
-        stan_data = dict()
-        for name in self.raw_data['stan_constants']:
-            stan_data[name] = self.raw_data[name]
-        for name in self.raw_data['stan_data']:
-            stan_data[name] = self.raw_data[name]
-        return stan_data
-
-    def get_stan_data_at_t(self, t):
-        stan_data = dict()
-        for name in self.raw_data['stan_constants']:
-            stan_data[name] = self.raw_data[name]
-        stan_data['N'] = 1
-        for name in self.raw_data['stan_data']:
-            stan_data[name] = self.raw_data[name][t]
-        return stan_data
-
-    def get_stan_data_upto_t(self, t):
-        stan_data = dict()
-        for name in self.raw_data['stan_constants']:
-            stan_data[name] = self.raw_data[name]
-        stan_data['N'] = t
-        for name in self.raw_data['stan_data']:
-            stan_data[name] = self.raw_data[name][:t]
-        return stan_data
+            
