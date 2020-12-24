@@ -42,8 +42,22 @@ def plot_density(df, width=300, height=50) :
         density='value',
         groupby=['cn', 'row', 'col', 'source'],
     ).mark_area(opacity=0.5).encode(
-        alt.X('value:Q'),
+        alt.X('value:Q', title=None),
         alt.Y('density:Q'),
+        alt.Row('row'),
+        alt.Column('col'),
+        alt.Color('source')
+    ).resolve_scale(
+        x='independent'
+    ).properties(width=width, height=height)
+
+
+def plot_line(df, width=300, height=50) :
+    return alt.Chart(df).mark_line(
+        strokeWidth = 1,
+        ).encode(
+        alt.X('idx:Q', title=None),
+        alt.Y('value:Q'),
         alt.Row('row'),
         alt.Column('col'),
         alt.Color('source')
