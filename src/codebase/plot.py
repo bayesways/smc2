@@ -36,26 +36,27 @@ def get_post_df(samples):
 def plot_density(df, width=300, height=50) :
     # it only works for one chain for now
     assert df.chain.unique().shape[0] == 1
-    return alt.Chart(df).transform_fold(
+    c = alt.Chart(df).transform_fold(
         ['value']
-    ).transform_density(
-        density='value',
-        groupby=['cn', 'row', 'col', 'source'],
-    ).mark_area(opacity=0.5).encode(
-        alt.X('value:Q', title=None),
-        alt.Y('density:Q'),
-        alt.Row('row'),
-        alt.Column('col'),
-        alt.Color('source')
-    ).resolve_scale(
-        x='independent'
-    ).properties(width=width, height=height)
-
+        ).transform_density(
+            density='value',
+            groupby=['cn', 'row', 'col', 'source'],
+        ).mark_area(opacity=0.5).encode(
+            alt.X('value:Q', title=None),
+            alt.Y('density:Q'),
+            alt.Row('row'),
+            alt.Column('col'),
+            alt.Color('source')
+        ).resolve_scale(
+            x='independent'
+        ).properties(width=width, height=height)
+    return c
+    
 
 def plot_line(df, width=300, height=50) :
     # it only works for one chain for now
     assert df.chain.unique().shape[0] == 1
-    return alt.Chart(df).mark_line(
+    c = alt.Chart(df).mark_line(
         strokeWidth = 1,
         ).encode(
         alt.X('idx:Q', title=None),
@@ -63,7 +64,17 @@ def plot_line(df, width=300, height=50) :
         alt.Row('row'),
         alt.Column('col'),
         alt.Color('source')
-    ).resolve_scale(
-        x='independent'
-    ).properties(width=width, height=height)
+        ).resolve_scale(
+            x='independent'
+        ).properties(width=width, height=height)
+    return c
 
+
+def plot_correlations(samples, width=300, height=50) :
+    corrdf = pd.DataFrame(samples, columns=['corr'])
+    corrdf['idx'] = np.arange(corrdf.shape[0])
+    c = alt.Chart(corrdf).mark_bar().encode(
+            alt.X('idx:Q', title='data iteration t'),
+            alt.Y('corr:Q')
+            ).properties(width=width, height=height)
+    return c

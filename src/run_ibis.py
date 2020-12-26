@@ -7,7 +7,7 @@ from codebase.file_utils import (
     load_obj,
 )
 from scipy.special import logsumexp
-
+from pdb import set_trace
 
 
 def run_ibis(
@@ -23,6 +23,9 @@ def run_ibis(
     ## setup particles
     param_names = model_phonebook(model_num)['param_names']
     latent_names = model_phonebook(model_num)['latent_names']
+    jitter_corrs = dict()
+    for p in param_names:
+        jitter_corrs[p] = np.zeros(exp_data.size)
     particles = Particles(
         name = name,
         model_num = model_num,
@@ -50,7 +53,20 @@ def run_ibis(
         
         if (essl(particles.weights) < degeneracy_limit * particles.size) and (t+1) < exp_data.size:
             particles.resample_particles()
+            
+            ## add corr of param before jitter
+            pre_jitter = dict()
+            for p in param_names:
+                pre_jitter[p] = particles.particles[p].flatten()
+            ####
+
             particles.jitter(exp_data.get_stan_data_upto_t(t+1))
+
+            ## add corr of param
+            for p in param_names:
+                jitter_corrs[p][t] = np.corrcoef(pre_jitter[p],particles.particles[p].flatten())[0,1]          
+            ####
+
             particles.reset_weights()
         else:
             particles.update_weights()
@@ -58,6 +74,8 @@ def run_ibis(
         save_obj(particles, 'particles', log_dir)
         save_obj(t, 't', log_dir)
     save_obj(log_lklhds, 'log_lklhds', log_dir)
+    save_obj(jitter_corrs, 'jitter_corrs', log_dir)
+
 
     print('\n\n')
     marg_lklhd = np.exp(logsumexp(log_lklhds))
@@ -68,4 +86,5 @@ def run_ibis(
     output['particles'] = particles
     output['log_lklhds'] = log_lklhds
     output['marg_lklhd'] = marg_lklhd
+    output['jitter_corrs'] = jitter_corrs
     return output

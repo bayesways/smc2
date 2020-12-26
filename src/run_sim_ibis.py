@@ -38,18 +38,19 @@ else:
 exp_data = Data(
     name = args.task_handle, 
     model_num = 4,  
-    size = 10,
+    size = 30,
     random_seed = 0
     )
     
 exp_data.generate()
+save_obj(exp_data, 'data', log_dir)
 
 model_num = 3
 
 ibis = run_ibis(
     exp_data,
     model_num,
-    10,
+    100,
     args.gen_model,
     log_dir
     )
