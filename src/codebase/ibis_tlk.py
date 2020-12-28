@@ -9,13 +9,7 @@ def gen_weights_master(
     particles,
     M
     ):
-    if model_num == 0:
-        return get_weights_0(
-            data,
-            particles,
-            M
-            )
-    elif model_num in[1,2,3,4,5]:
+    if model_num in [0,1,2,3,4,5]:
         return get_weights_0(
             data,
             particles,
