@@ -8,7 +8,6 @@ from codebase.ibis import (
     exp_and_normalise
 )
 from codebase.ibis_tlk import gen_weights_master
-from codebase.ibis_tlk_latent import gen_latent_weights_master, sample_latent_master
 from codebase.file_utils import (
     save_obj,
     load_obj,
@@ -165,80 +164,3 @@ class Particles:
             self.incremental_weights + self.weights
             ) - logsumexp(self.weights)
 
-
-class ParticlesLatent(Particles):
-    def __init__(
-        self,
-        name,
-        model_num,
-        nsim,
-        param_names,
-        latent_names,
-        cloud_size,
-        latent_model_num
-        ):
-        super().__init__(
-            name,
-            model_num,
-            nsim,
-            param_names,
-            latent_names
-            )
-        self.cloud_size = cloud_size
-        self.latent_model_num = latent_model_num
-
-
-    def sample_prior_latent_variables(self, data):
-            self.latent_particles = sample_latent_master(
-                self.latent_model_num, 
-                self.particles,
-                self.size,
-                self.cloud_size, 
-                data
-            )
-
-
-    def reset_latent_weights(self):
-        self.latent_weights = np.zeros(self.cloud_size)
-
-
-    def get_latent_weights(self, data):
-        self.latent_weights = gen_latent_weights_master(
-            self.latent_model_num,
-            data,
-            self.latent_particles,
-            self.size,
-            self.cloud_size
-            )
-
-
-    def resample_particles(self):
-        # get the index of the resampled particles
-        resample_index = get_resample_index(self.weights, self.size)
-        # then apply the same index to parameters 
-        for name in self.param_names:
-            samples = self.particles[name][resample_index].copy()
-            self.particles[name] = samples
-        # and latent variables 
-        for name in self.latent_names:
-            samples = self.latent_particles[name][resample_index].copy()
-            self.latent_particles[name] = samples
-
-
-    def sample_latent_y_star(self):
-        y_latent_star = np.empty((
-            self.size, self.latent_particles['y_latent'].shape[-1]
-            ))
-        z_star = np.empty(self.size)
-        latent_particles_star = dict()
-        for m in range(self.size):
-            w = exp_and_normalise(self.latent_weights[m])
-            nw = w / np.sum(w)
-            np.testing.assert_allclose(1., nw.sum())  
-            sampled_index = multinomial(nw, 1)
-            y_latent_star[m] = self.latent_particles['y_latent'][m, sampled_index]
-            z_star[m] = self.latent_particles['z'][m, sampled_index]
-        latent_particles_star['y_latent'] = y_latent_star
-        latent_particles_star['z'] = z_star
-        self.latent_particles_star = latent_particles_star
-        

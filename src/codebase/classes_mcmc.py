@@ -8,10 +8,8 @@ from codebase.ibis import (
     get_initial_values_dict,
     exp_and_normalise
 )
-from codebase.ibis_tlk import gen_weights_master
 from codebase.mcmc_tlk_latent import(
     gen_latent_weights_master,
-    generate_latent_variables,
     generate_latent_variables_bundle,
 )
 from codebase.file_utils import (
@@ -110,7 +108,7 @@ class MCMC:
         self.weights = gen_latent_weights_master(
             self.latent_model_num,
             data,
-            self.latent_particles,
+            self.latent_particles['y_latent'],
             self.bundle_size
             ) 
     
@@ -126,7 +124,7 @@ class MCMC:
         weights_star = gen_latent_weights_master(
             self.latent_model_num,
             data,
-            latent_var_star,
+            latent_var_star['y_latent'],
             self.bundle_size
         )
         ## Accept/Reject Step 

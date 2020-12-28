@@ -10,7 +10,7 @@ from scipy.special import logsumexp
 from pdb import set_trace
 
 
-def run_ibis(
+def run_ibis_lvm(
     exp_data,
     model_num,
     size,
@@ -49,6 +49,7 @@ def run_ibis(
             exp_data.get_stan_data_at_t(t)
             )
         log_lklhds[t] =  particles.get_loglikelihood_estimate()
+        particles.update_weights()
         
         if (essl(particles.weights) < degeneracy_limit * particles.size) and (t+1) < exp_data.size:
             particles.resample_particles()
