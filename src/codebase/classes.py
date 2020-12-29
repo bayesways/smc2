@@ -16,6 +16,7 @@ from codebase.file_utils import (
 )
 from codebase.resampling_routines import multinomial
 from scipy.special import logsumexp
+from pdb import set_trace
 
 class Particles:
     def __init__(
@@ -107,9 +108,14 @@ class Particles:
     def get_particles_at_position_m(self, m):
         values_dict = dict()
         for name in self.param_names:
-            values_dict[name] = np.squeeze(
-                self.particles[name][m].copy()
-            )
+            if name != 'beta':
+                values_dict[name] = np.squeeze(
+                    self.particles[name][m].copy()
+                )
+            else:
+                values_dict[name] = np.squeeze(
+                    self.particles[name][m].copy()
+                ).reshape(6,1)
         return values_dict
 
 

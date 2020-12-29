@@ -37,7 +37,7 @@ else:
 # generate data
 exp_data = Data(
     name = args.task_handle, 
-    model_num = 4,  
+    model_num = 6,  
     size = 30,
     random_seed = 0
     )
@@ -45,20 +45,13 @@ exp_data = Data(
 exp_data.generate()
 save_obj(exp_data, 'data', log_dir)
 
-model_num = 3
+model_num = 7
 
-ibis = run_ibis(
+ibis = run_ibis_lvm(
     exp_data,
     model_num,
     100,
+    50,
     args.gen_model,
     log_dir
     )
-
-for name in ['alpha', 'Marg_cov']:
-    samples = np.squeeze(ibis['particles'].particles[name])
-    w = exp_and_normalise(ibis['particles'].weights)
-    print('\n\nEstimate')
-    print(np.round(np.average(samples,axis=0, weights=w),2))
-    # print('\nRead Data')
-    # print(np.round(exp_data.raw_data[name],2))
