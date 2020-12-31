@@ -34,13 +34,21 @@ def get_latent_weights_1(
     And return the weight of each bundle
     as the average across k 
     """
-    weights = np.empty((bundle_size, data['N']))
-    for m in range(bundle_size):
-        for t in range(data['N']):
-            weights[m,t] = bernoulli.logpmf(
-                data['D'][t],
-                p=expit(y_latent[m,t])
+    if data['N'] == 1:
+        weights = np.empty((bundle_size,1))
+        for m in range(bundle_size):
+            weights[m,0] = bernoulli.logpmf(
+                data['D'],
+                p=expit(y_latent[m])
             ).sum()
+    else:
+        weights = np.empty((bundle_size, data['N']))
+        for m in range(bundle_size):
+            for t in range(data['N']):
+                weights[m,t] = bernoulli.logpmf(
+                    data['D'][t],
+                    p=expit(y_latent[m,t])
+                ).sum()
     return weights
 
 

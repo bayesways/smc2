@@ -13,8 +13,7 @@ from codebase.resampling_routines import multinomial
 from scipy.stats import bernoulli, multivariate_normal
 from scipy.special import expit, logsumexp
 from tqdm import tqdm
-import pdb
-
+from pdb import set_trace
 
 
 def compile_model(model_num, prior, log_dir, save=True):
