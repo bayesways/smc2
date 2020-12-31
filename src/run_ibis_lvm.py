@@ -30,8 +30,8 @@ def run_ibis_lvm(
     particles = ParticlesLVM(
         name = 'ibis_lvm',
         model_num = model_num,
-        size = 100,
-        bundle_size=50,
+        size = 8,
+        bundle_size=7,
         param_names = param_names,
         latent_names = latent_names,
         latent_model_num= 1
@@ -51,11 +51,9 @@ def run_ibis_lvm(
     particles.sample_prior_particles(exp_data.get_stan_data()) # sample prior particles
     particles.reset_weights() # set weights to 0
 
-
     for t in tqdm(range(exp_data.size)):    
         particles.sample_latent_variables(exp_data.get_stan_data_at_t(t))
         particles.get_bundle_weights(exp_data.get_stan_data_at_t(t))
-
         particles.incremental_weights = np.mean(np.squeeze(particles.latent_weights), axis=1)
         log_lklhds[t] =  particles.get_loglikelihood_estimate()
         

@@ -37,7 +37,7 @@ else:
 # generate data
 exp_data = Data(
     name = args.task_handle, 
-    model_num = 6,  
+    model_num = 1,  
     size = 30,
     random_seed = 0
     )

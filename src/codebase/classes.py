@@ -116,6 +116,9 @@ class Particles:
                 values_dict[name] = np.squeeze(
                     self.particles[name][m].copy()
                 ).reshape(6,1)
+            # values_dict[name] = np.squeeze(
+            #     self.particles[name][m].copy()
+            # )
         return values_dict
 
 
@@ -123,8 +126,8 @@ class Particles:
         fit_run = run_mcmc(
             data = data,
             sm = self.compiled_model,
-            num_samples = 10, #normally 20
-            num_warmup = 500, #normally 1000
+            num_samples = 20, #normally 20
+            num_warmup = 1000, #normally 1000
             num_chains = 1, # don't change
             log_dir = self.log_dir,
             initial_values = self.get_particles_at_position_m(m),
@@ -142,7 +145,7 @@ class Particles:
         fit_run = run_mcmc(
             data = data,
             sm = self.compiled_model,
-            num_samples = 10, # normally 20 
+            num_samples = 20, # normally 20 
             num_warmup = 0,
             num_chains = 1, # don't change
             log_dir = self.log_dir,

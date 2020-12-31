@@ -59,7 +59,7 @@ class ParticlesLVM(Particles):
             ))
         for m in range(self.size):
             latent_vars = generate_latent_variables_bundle(
-                self.bundle_size, # don't need
+                self.bundle_size,
                 data['N'],
                 data['J'],
                 data['K'], # number of factors
@@ -100,7 +100,6 @@ class ParticlesLVM(Particles):
 
     def sample_latent_particles_star(self, data):
         for m in range(self.size):
-            # set_trace()
             latent_var_star = generate_latent_variables_bundle(
                 self.bundle_size,
                 data['N'],
@@ -108,14 +107,12 @@ class ParticlesLVM(Particles):
                 data['K'], # number of factors
                 self.particles['alpha'][m],
                 self.particles['beta'][m])
-            # set_trace()
             weights_star = gen_latent_weights_master(
                 self.latent_model_num,
                 data,
                 latent_var_star['y_latent'],
                 self.bundle_size
             )
-            # set_trace()
 
             ## Accept/Reject Step 
             logdiff = weights_star.mean(axis=0)-self.latent_weights[m].mean(axis=0)
