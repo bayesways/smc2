@@ -160,7 +160,6 @@ class ParticlesLVM(Particles):
                         self.bundles[name][m, :, t] = bundle_star[name].copy()
 
 
-
     def pick_a_bundle(self, m, t, data):
         bundle_weights = get_weight_matrix_for_particle(
             self.bundle_size,
