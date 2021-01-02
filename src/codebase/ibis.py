@@ -62,10 +62,18 @@ def sample_prior_particles(
         algorithm = 'Fixed_param',
         n_jobs=1
     )
-    particles = fit_run.extract(
-        permuted=False, pars=param_names)
-
+    particles = remove_chain_dim(
+        fit_run.extract(
+        permuted=False, pars=param_names),
+        param_names
+    )
     return particles
+
+
+def remove_chain_dim(ps, param_names):
+    for name in param_names:
+        ps[name] = ps[name][:,0].copy()
+    return ps
 
 
 def get_initial_values_dict(particles, m):

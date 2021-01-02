@@ -10,7 +10,7 @@ from codebase.file_utils import (
 from codebase.ibis import exp_and_normalise
 from run_ibis_lvm import run_ibis_lvm
 from scipy.special import logsumexp
-
+from pdb import set_trace
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-th", "--task_handle",
@@ -44,7 +44,6 @@ exp_data = Data(
     
 exp_data.generate()
 save_obj(exp_data, 'data', log_dir)
-
 model_num = 7
 
 ibis = run_ibis_lvm(

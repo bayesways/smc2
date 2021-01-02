@@ -4,173 +4,87 @@ from scipy.special import expit, logsumexp
 from pdb import set_trace
 
 
-def gen_latent_weights_master(
-    latent_model_num,
-    data,
-    particles,
-    bundle_size
+def initialize_bundles(
+    size, 
+    bundle_size,
+    data
     ):
-    if latent_model_num == 1:
-        return get_latent_weights_1(
-            data,
-            particles,
-            bundle_size
-            )
+    latent_bundles = dict()
+    latent_bundles['z'] = np.zeros((
+        size,
+        bundle_size,
+        data['N'],
+        data['K']
+        )
+    )
+    latent_bundles['y'] = np.zeros((
+        size,
+        bundle_size,
+        data['N'],
+        data['J']
+        )
+    )
+    return latent_bundles
 
 
-def get_latent_weights_1(
+def get_weight(
     data,
-    y_latent,
-    bundle_size
+    yy
     ):
-    """
-    data in NxJ
-    weights are of size NxK 
-    where K is the size of each bundle. 
-
-    For each data point D_t we compute
-    weights p(D_t | Z_t^k) for k:1...K
-
-    And return the weight of each bundle
-    as the average across k 
-    """
-    if data['N'] == 1:
-        weights = np.empty((bundle_size,1))
-        for m in range(bundle_size):
-            weights[m,0] = bernoulli.logpmf(
-                data['D'],
-                p=expit(y_latent[m])
+    assert data['N'] == 1
+    w = bernoulli.logpmf(
+            data['D'],
+            p=expit(yy)
             ).sum()
-    else:
-        weights = np.empty((bundle_size, data['N']))
-        for m in range(bundle_size):
-            for t in range(data['N']):
-                weights[m,t] = bernoulli.logpmf(
-                    data['D'][t],
-                    p=expit(y_latent[m,t])
-                ).sum()
+    return w 
+
+
+def get_bundle_weights(
+    bundle_size,
+    data,
+    y_bundle,
+    ):
+    bundle_w = np.empty(bundle_size)
+    for l in range(bundle_size):
+        bundle_w[l] = get_weight(data, y_bundle[l])
+    return bundle_w
+
+
+def get_weight_matrix_at_datapoint(
+    size,
+    bundle_size,
+    data,
+    yy):
+    weights = np.empty((size,bundle_size))
+    for m in range(size):
+        weights[m] =  get_bundle_weights(
+            bundle_size,
+            data,
+            yy[m])
     return weights
 
 
-def generate_latent_variables(
-    data_N,
-    data_J,
-    data_K,
-    alpha,
-    beta):
-    latent_vars = dict()
-    zz = norm.rvs(
-        size = data_N*data_K
-        ).reshape((data_N,data_K))
-    y_latent = np.empty((
-        data_N,
-        data_J))
-    y_latent = np.squeeze(alpha) +\
-        zz @ np.squeeze(beta).reshape(data_J, data_K).T
-    latent_vars['z'] = zz
-    latent_vars['y_latent'] = y_latent
-    return latent_vars
-
-
-
-def generate_latent_variables_bundle(
+def get_weight_matrix_for_particle(
     bundle_size,
-    data_N,
+    data,
+    yy):
+    weights = np.empty(bundle_size)
+    for l in range(bundle_size):
+        weights[l] =  bernoulli.logpmf(
+            data['D'],
+            p=expit(yy[l])
+            ).sum()
+    return weights
+
+
+def generate_latent_pair(
     data_J,
     data_K,
     alpha,
     beta):
-    latent_vars = dict()
-    zz = np.empty((
-        bundle_size,
-        data_N,
-        data_K))
-    y_latent = np.empty((
-        bundle_size,
-        data_N,
-        data_J))
-    for m in range(bundle_size):
-        bundle_vars = generate_latent_variables(        
-            data_N,
-            data_J,
-            data_K,
-            alpha,
-            beta)
-        zz[m] = bundle_vars['z']
-        y_latent[m] = bundle_vars['y_latent']
-    latent_vars['z'] = zz
-    latent_vars['y_latent'] = y_latent
-    return latent_vars
-
-
-
-
-# def generate_latent_variables(
-#     data_N,
-#     data_J,
-#     data_K,
-#     alpha,
-#     beta):
-#     zz = norm.rvs(
-#         size = data_N*data_K
-#         ).reshape((data_N,data_K))
-#     return zz
-
-
-
-# def generate_latent_variables_bundle(
-#     bundle_size,
-#     data_N,
-#     data_J,
-#     data_K,
-#     alpha,
-#     beta):
-#     zz_bundles = np.empty((
-#         bundle_size,
-#         data_N,
-#         data_K))
-#     for m in range(bundle_size):
-#         zz_bundles[m] = generate_latent_variables(        
-#             data_N,
-#             data_J,
-#             data_K,
-#             alpha,
-#             beta)
-#     return zz_bundles
-
-
-# import numpy as np
-# from scipy.stats import bernoulli, multivariate_normal, logistic, norm
-# from scipy.special import expit, logsumexp
-
-
-# def gen_latent_weights_master(
-#     latent_model_num,
-#     data,
-#     particles,
-#     particle_size,
-#     bundle_size
-#     ):
-#     if latent_model_num == 1:
-#         return get_latent_weights_1(
-#             data,
-#             particles,
-#             particle_size,
-#             bundle_size
-#             )
-
-
-# def get_latent_weights_1(
-#     data,
-#     latent_particles,
-#     particle_size,
-#     bundle_size
-#     ):
-#     weights = np.empty((particle_size, bundle_size))
-#     for m in range(particle_size):
-#         w = bernoulli.logpmf(
-#             data['D'],
-#             p=expit(latent_particles['y_latent'][m])
-#         )
-#         weights[m] = np.sum(w, axis=1)
-#     return weights
+    pair = dict()
+    zz = norm.rvs(size = data_K)
+    yy = alpha + zz @ beta.T
+    pair['z'] = zz
+    pair['y'] = yy
+    return pair
