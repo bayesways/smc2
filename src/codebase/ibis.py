@@ -62,10 +62,18 @@ def sample_prior_particles(
         algorithm = 'Fixed_param',
         n_jobs=1
     )
-    particles = fit_run.extract(
-        permuted=False, pars=param_names)
-
+    particles = remove_chain_dim(
+        fit_run.extract(
+        permuted=False, pars=param_names),
+        param_names
+    )
     return particles
+
+
+def remove_chain_dim(ps, param_names):
+    for name in param_names:
+        ps[name] = ps[name][:,0].copy()
+    return ps
 
 
 def get_initial_values_dict(particles, m):
@@ -220,17 +228,3 @@ def get_resample_index(weights, size):
     nw = w / np.sum(w)
     np.testing.assert_allclose(1., nw.sum())  
     return multinomial(nw, size)
-
-
-def resample_particles(particles):
-    assert  particles['M'] == len(particles['w'])
-
-    w = exp_and_normalise(particles['w'])
-    nw = w / np.sum(w)
-    np.testing.assert_allclose(1., nw.sum())  
-    sampled_index = multinomial(nw, particles['M'])
-    for key in particles['param_names']:
-            particles[key] = particles[key][sampled_index]
-
-    return particles
-

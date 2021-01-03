@@ -49,6 +49,7 @@ def run_ibis(
             exp_data.get_stan_data_at_t(t)
             )
         log_lklhds[t] =  particles.get_loglikelihood_estimate()
+        particles.update_weights()
         
         if (essl(particles.weights) < degeneracy_limit * particles.size) and (t+1) < exp_data.size:
             particles.resample_particles()
@@ -68,7 +69,7 @@ def run_ibis(
 
             particles.reset_weights()
         else:
-            particles.update_weights()
+            pass
 
         save_obj(particles, 'particles', log_dir)
         save_obj(t, 't', log_dir)

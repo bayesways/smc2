@@ -5,7 +5,8 @@ from codebase.ibis import (
     get_resample_index,
     run_mcmc,
     get_initial_values_dict,
-    exp_and_normalise
+    exp_and_normalise,
+    remove_chain_dim
 )
 from codebase.ibis_tlk import gen_weights_master
 from codebase.file_utils import (
@@ -91,15 +92,16 @@ class Particles:
             self.particles,
             self.size
             )
-
+    
 
     def update_weights(self):
-        self.weights = self.weights + self.incremental_weights
+         weights = self.weights.copy()
+         weights = weights + self.incremental_weights
+         self.weights = weights.copy()
     
 
     def resample_particles(self):
         resample_index = get_resample_index(self.weights, self.size)
-        # print(resample_index)
         for name in self.param_names:
             samples = self.particles[name][resample_index].copy()
             self.particles[name] = samples
@@ -108,17 +110,7 @@ class Particles:
     def get_particles_at_position_m(self, m):
         values_dict = dict()
         for name in self.param_names:
-            if name != 'beta':
-                values_dict[name] = np.squeeze(
-                    self.particles[name][m].copy()
-                )
-            else:
-                values_dict[name] = np.squeeze(
-                    self.particles[name][m].copy()
-                ).reshape(6,1)
-            # values_dict[name] = np.squeeze(
-            #     self.particles[name][m].copy()
-            # )
+            values_dict[name] = self.particles[name][m]
         return values_dict
 
 
@@ -126,8 +118,8 @@ class Particles:
         fit_run = run_mcmc(
             data = data,
             sm = self.compiled_model,
-            num_samples = 20, #normally 20
-            num_warmup = 1000, #normally 1000
+            num_samples = 10, #normally 20
+            num_warmup = 100, #normally 1000
             num_chains = 1, # don't change
             log_dir = self.log_dir,
             initial_values = self.get_particles_at_position_m(m),
@@ -145,7 +137,7 @@ class Particles:
         fit_run = run_mcmc(
             data = data,
             sm = self.compiled_model,
-            num_samples = 20, # normally 20 
+            num_samples = 10, # normally 20 
             num_warmup = 0,
             num_chains = 1, # don't change
             log_dir = self.log_dir,

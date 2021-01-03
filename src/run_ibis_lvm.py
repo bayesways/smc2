@@ -30,8 +30,8 @@ def run_ibis_lvm(
     particles = ParticlesLVM(
         name = 'ibis_lvm',
         model_num = model_num,
-        size = 8,
-        bundle_size=7,
+        size = size,
+        bundle_size=bundle_size,
         param_names = param_names,
         latent_names = latent_names,
         latent_model_num= 1
@@ -50,24 +50,18 @@ def run_ibis_lvm(
 
     particles.sample_prior_particles(exp_data.get_stan_data()) # sample prior particles
     particles.reset_weights() # set weights to 0
+    particles.initialize_bundles(exp_data.get_stan_data())
 
     for t in tqdm(range(exp_data.size)):    
-        particles.sample_latent_variables(exp_data.get_stan_data_at_t(t))
-        particles.get_bundle_weights(exp_data.get_stan_data_at_t(t))
-        particles.incremental_weights = np.mean(np.squeeze(particles.latent_weights), axis=1)
+        particles.sample_latent_bundle_at_t(t, exp_data.get_stan_data_at_t(t))
+        particles.get_theta_incremental_weights_at_t(t, exp_data.get_stan_data_at_t(t))
         log_lklhds[t] =  particles.get_loglikelihood_estimate()
         
+        particles.update_weights()
 
         if (essl(particles.weights) < degeneracy_limit * particles.size) and (t+1) < exp_data.size:
-            
-            particles.resample_particles()    
-            
-            particles.sample_latent_variables(exp_data.get_stan_data_upto_t(t+1))
-            particles.get_bundle_weights(exp_data.get_stan_data_upto_t(t+1))
-
-            particles.sample_latent_particles_star(exp_data.get_stan_data_upto_t(t+1))
-            particles.sample_latent_var_given_theta(exp_data.get_stan_data_upto_t(t+1))
-
+            particles.resample_particles_bundles()
+            particles.jitter_bundles(exp_data.get_stan_data_upto_t(t+1))
             
             ## add corr of param before jitter
             pre_jitter = dict()
@@ -75,7 +69,7 @@ def run_ibis_lvm(
                 pre_jitter[p] = particles.particles[p].flatten()
             ####
 
-            particles.jitter(exp_data.get_stan_data_upto_t(t+1))
+            particles.jitter(t+1, exp_data.get_stan_data_upto_t(t+1))
 
             ## add corr of param
             for p in param_names:
@@ -84,13 +78,13 @@ def run_ibis_lvm(
 
             particles.reset_weights()
         else:
-            particles.update_weights()
+            pass
 
-
-        save_obj(particles, 'particles', log_dir)
         save_obj(t, 't', log_dir)
-    save_obj(log_lklhds, 'log_lklhds', log_dir)
-    save_obj(jitter_corrs, 'jitter_corrs', log_dir)
+        save_obj(particles, 'particles', log_dir)
+        save_obj(jitter_corrs, 'jitter_corrs', log_dir)
+        save_obj(log_lklhds, 'log_lklhds', log_dir)
+
 
 
     print('\n\n')
