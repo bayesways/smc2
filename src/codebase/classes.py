@@ -95,7 +95,9 @@ class Particles:
     
 
     def update_weights(self):
-        self.weights = self.weights + self.incremental_weights
+         weights = self.weights.copy()
+         weights = weights + self.incremental_weights
+         self.weights = weights.copy()
     
 
     def resample_particles(self):
@@ -108,7 +110,7 @@ class Particles:
     def get_particles_at_position_m(self, m):
         values_dict = dict()
         for name in self.param_names:
-            values_dict[name] = self.particles[name][m].copy()
+            values_dict[name] = self.particles[name][m]
         return values_dict
 
 

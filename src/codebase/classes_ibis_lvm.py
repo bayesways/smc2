@@ -55,16 +55,18 @@ class ParticlesLVM(Particles):
 
 
     def get_bundles_at_t(self, t):
+        # returns a pointer to current values
         bundles_at_t = dict()
         for name in self.latent_names:
-            bundles_at_t[name] = self.bundles[name][:,:,t].copy()
+            bundles_at_t[name] = self.bundles[name][:,:,t]
         return bundles_at_t
 
     
     def get_bundles_upto_t(self, t):
+        # returns a pointer to current values
         bundles_at_t = dict()
         for name in self.latent_names:
-            bundles_at_t[name] = self.bundles[name][:,:,:t].copy()
+            bundles_at_t[name] = self.bundles[name][:,:,:t]
         return bundles_at_t
 
 
@@ -101,7 +103,7 @@ class ParticlesLVM(Particles):
                 data_t
                 )
             for name in self.latent_names:
-                self.bundles[name][m, :, t] = new_bundle[name].copy()
+                self.bundles[name][m, :, t] = new_bundle[name]
 
 
     def get_theta_incremental_weights_at_t(self, t, data):
@@ -115,10 +117,10 @@ class ParticlesLVM(Particles):
 
     def jitter(self, t, data):
         mcmc_data = data.copy()
-        mcmc_data['zz'] = self.pick_a_bundle(0, t, data).copy()
+        mcmc_data['zz'] = self.pick_a_bundle(0, t, data)
         self.jitter_and_save_mcmc_parms(mcmc_data, 0)
         for m in range(1, self.size):
-            mcmc_data['zz'] = self.pick_a_bundle(m, t, data).copy()
+            mcmc_data['zz'] = self.pick_a_bundle(m, t, data)
             self.jitter_with_used_mcmc_params(mcmc_data, m)
 
 

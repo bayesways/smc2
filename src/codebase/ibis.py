@@ -230,15 +230,16 @@ def get_resample_index(weights, size):
     return multinomial(nw, size)
 
 
-def resample_particles(particles):
-    assert  particles['M'] == len(particles['w'])
+# don't need this
+# def resample_particles(particles):
+#     assert  particles['M'] == len(particles['w'])
 
-    w = exp_and_normalise(particles['w'])
-    nw = w / np.sum(w)
-    np.testing.assert_allclose(1., nw.sum())  
-    sampled_index = multinomial(nw, particles['M'])
-    for key in particles['param_names']:
-            particles[key] = particles[key][sampled_index]
+#     w = exp_and_normalise(particles['w'])
+#     nw = w / np.sum(w)
+#     np.testing.assert_allclose(1., nw.sum())  
+#     sampled_index = multinomial(nw, particles['M'])
+#     for key in particles['param_names']:
+#             particles[key] = particles[key][sampled_index]
 
-    return particles
+#     return particles
 
