@@ -50,6 +50,7 @@ def run_ibis_lvm(
     particles.reset_weights()  # set weights to 0
     particles.initialize_bundles(exp_data.get_stan_data())
     particles.initialize_latent_var_given_theta(exp_data.get_stan_data())
+    particles.initialize_counter(exp_data.get_stan_data())
 
     for t in tqdm(range(exp_data.size)):
         particles.sample_latent_bundle_at_t(t, exp_data.get_stan_data_at_t(t))
@@ -61,6 +62,7 @@ def run_ibis_lvm(
         if (essl(particles.weights) < degeneracy_limit * particles.size) and (
             t + 1
         ) < exp_data.size:
+            particles.add_ess(t)
             particles.resample_particles_bundles()
             particles.jitter_bundles_and_pick_one(exp_data.get_stan_data_upto_t(t + 1))
 

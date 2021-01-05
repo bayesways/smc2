@@ -62,6 +62,22 @@ class ParticlesLVM(Particles):
             )
 
 
+    def initialize_counter(self, data):
+        self.ess = np.zeros(data['N'])
+        self.acceptances = np.zeros((
+            self.size,
+            data['N']
+        ))
+        self.counts = np.zeros((
+            self.size,
+            data['N']
+        ))
+
+
+    def add_ess(self, t):
+        self.ess[t] = 1
+
+
     def get_bundles_at_t(self, t):
         # returns a pointer to current values
         bundles_at_t = dict()
@@ -148,6 +164,7 @@ class ParticlesLVM(Particles):
             data_t['J'] = data['J']
             data_t['D'] = data['D'][t]
             for m in range(self.size):
+                self.counts[m,t] += 1
                 bundle_star = self.generate_latent_bundle(
                     self.particles['alpha'][m],
                     self.particles['beta'][m],
@@ -165,7 +182,7 @@ class ParticlesLVM(Particles):
                 logdiff = weights_star.mean() - existing_weights.mean()
                 u=np.random.uniform()
                 if (np.log(u) <= logdiff):
-                    # self.acceptance[t] += 1
+                    self.acceptances[m,t] += 1
                     for name in self.latent_names:
                         self.bundles[name][m, :, t] = bundle_star[name].copy()
                     # pick bundle
