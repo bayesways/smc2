@@ -71,13 +71,3 @@ def plot_correlations(samples, width=300, height=50) :
             ).properties(width=width, height=height)
     return c
 
-acc_rate = particles.acceptances.astype(float)/particles.counts.astype(float)
-acc_rate = pd.DataFrame(np.round(acc_rate[:,particles.ess.astype(int)], 2))
-acc_rate['param'] = np.arange(acc_rate.shape[0])
-acc_rate = acc_rate.melt(id_vars = 'param', var_name = 't')
-
-c = alt.Chart(acc_rate[acc_rate.param == 2]).mark_bar().encode(
-    alt.X('t:Q', title='data iteration t'),
-    alt.Y('value:Q')
-    ).properties(width=500, height=150)
-c
