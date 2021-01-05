@@ -224,7 +224,6 @@ def essl(lw):
 
 
 def get_resample_index(weights, size):
-    w = exp_and_normalise(weights)
-    nw = w / np.sum(w)
+    nw = exp_and_normalise(weights)
     np.testing.assert_allclose(1., nw.sum())  
     return multinomial(nw, size)
