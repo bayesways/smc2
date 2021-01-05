@@ -49,6 +49,7 @@ def run_ibis_lvm(
     particles.sample_prior_particles(exp_data.get_stan_data())  # sample prior particles
     particles.reset_weights()  # set weights to 0
     particles.initialize_bundles(exp_data.get_stan_data())
+    particles.initialize_latent_var_given_theta(exp_data.get_stan_data())
 
     for t in tqdm(range(exp_data.size)):
         particles.sample_latent_bundle_at_t(t, exp_data.get_stan_data_at_t(t))
@@ -61,8 +62,7 @@ def run_ibis_lvm(
             t + 1
         ) < exp_data.size:
             particles.resample_particles_bundles()
-            set_trace()
-            particles.jitter_bundles(exp_data.get_stan_data_upto_t(t + 1))
+            particles.jitter_bundles_and_pick_one(exp_data.get_stan_data_upto_t(t + 1))
 
             ## add corr of param before jitter
             pre_jitter = dict()

@@ -54,6 +54,14 @@ class ParticlesLVM(Particles):
             data)
 
 
+    def initialize_latent_var_given_theta(self, data):        
+        self.latent_var_given_theta = np.empty((self.size,
+            data['N'],
+            data['K']
+            )
+            )
+
+
     def get_bundles_at_t(self, t):
         # returns a pointer to current values
         bundles_at_t = dict()
@@ -117,10 +125,10 @@ class ParticlesLVM(Particles):
 
     def jitter(self, t, data):
         mcmc_data = data.copy()
-        mcmc_data['zz'] = self.pick_a_bundle(0, t, data)
+        mcmc_data['zz'] = self.latent_var_given_theta[0,:t]
         self.jitter_and_save_mcmc_parms(mcmc_data, 0)
         for m in range(1, self.size):
-            mcmc_data['zz'] = self.pick_a_bundle(m, t, data)
+            mcmc_data['zz'] = self.latent_var_given_theta[m,:t]
             self.jitter_with_used_mcmc_params(mcmc_data, m)
 
 
@@ -132,10 +140,12 @@ class ParticlesLVM(Particles):
             self.bundles[name] = self.bundles[name][resample_index].copy()
         
 
-    def jitter_bundles(self, data):
+    def jitter_bundles_and_pick_one(self, data):
         for t in range(data['N']):
-            data_t = data.copy()
+            data_t = dict()
             data_t['N'] = 1
+            data_t['K'] = data['K']
+            data_t['J'] = data['J']
             data_t['D'] = data['D'][t]
             for m in range(self.size):
                 bundle_star = self.generate_latent_bundle(
@@ -143,12 +153,10 @@ class ParticlesLVM(Particles):
                     self.particles['beta'][m],
                     data_t
                     )
-
                 weights_star = get_bundle_weights(
                     self.bundle_size,
                     data_t,
                     bundle_star['y'])
-
                 existing_weights = get_bundle_weights(
                     self.bundle_size,
                     data_t,
@@ -160,14 +168,11 @@ class ParticlesLVM(Particles):
                     # self.acceptance[t] += 1
                     for name in self.latent_names:
                         self.bundles[name][m, :, t] = bundle_star[name].copy()
-
-
-    def pick_a_bundle(self, m, t, data):
-        bundle_weights = get_weight_matrix_for_particle(
-            self.bundle_size,
-            data,
-            self.get_bundles_upto_t(t)['y'][m])
-        resample_index = get_resample_index(bundle_weights, 1)[0].astype(int)
-        picked_bundle =  self.get_bundles_upto_t(t)['z'][m][resample_index].copy()
-        return picked_bundle
+                    # pick bundle
+                    resample_index = get_resample_index(weights_star, 1)[0].astype(int)
+                    self.latent_var_given_theta[m,t] = bundle_star['z'][resample_index].copy()
+                else:
+                    # pick bundle
+                    resample_index = get_resample_index(existing_weights, 1)[0].astype(int)
+                    self.latent_var_given_theta[m,t] = self.get_bundles_at_t(t)['z'][m][resample_index].copy()
 
