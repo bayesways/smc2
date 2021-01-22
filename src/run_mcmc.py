@@ -6,12 +6,13 @@ from codebase.file_utils import (
     make_folder,
     path_backslash
 )
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 
 
 def run_mcmc(
-    exp_data,
+    stan_data,
     nsim_mcmc,
+    num_warmup,
     model_num,
     bundle_size,
     gen_model,
@@ -39,24 +40,27 @@ def run_mcmc(
         particles.load_prior_model()
         particles.load_model()
     
-    particles.sample_prior_particles(exp_data.get_stan_data())
+    particles.sample_prior_particles(stan_data)
     
     betas = np.empty((nsim_mcmc, 6, 1))
     alphas = np.empty((nsim_mcmc, 6))
-    zs = np.empty((nsim_mcmc, exp_data.raw_data['N'], 1))
-    ys = np.empty((nsim_mcmc, exp_data.raw_data['N'], 6))
+    zs = np.empty((nsim_mcmc, stan_data['N'], 1))
+    ys = np.empty((nsim_mcmc, stan_data['N'], 6))
     
-    particles.sample_latent_variables(exp_data.get_stan_data())
+    particles.sample_latent_variables(stan_data)
     
     for i in tqdm(range(nsim_mcmc)):
-        particles.get_bundle_weights(exp_data.get_stan_data())
-        particles.sample_latent_particles_star(exp_data.get_stan_data())
-        particles.sample_latent_var_given_theta(exp_data.get_stan_data())    
+        particles.get_bundle_weights(stan_data)
+        particles.sample_latent_particles_star(stan_data)
+        particles.sample_latent_var_given_theta(stan_data)    
         
         zs[i] = particles.latent_mcmc_sample['z']
         ys[i] = particles.latent_mcmc_sample['y_latent']
         
-        particles.sample_theta_given_z(exp_data.get_stan_data())
+        if i < num_warmup:
+            particles.sample_theta_given_z_and_save_mcmc_parms(stan_data)
+        else:
+            particles.sample_theta_given_z_with_used_mcmc_params(stan_data)
         alphas[i] = particles.particles['alpha']
         betas[i] = particles.particles['beta']
         
