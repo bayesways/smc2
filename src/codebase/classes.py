@@ -118,8 +118,8 @@ class Particles:
         fit_run = run_mcmc(
             data = data,
             sm = self.compiled_model,
-            num_samples = 10, #normally 20
-            num_warmup = 100, #normally 1000
+            num_samples = 5, #normally 20
+            num_warmup = 50, #normally 1000
             num_chains = 1, # don't change
             log_dir = self.log_dir,
             initial_values = self.get_particles_at_position_m(m),
@@ -137,7 +137,7 @@ class Particles:
         fit_run = run_mcmc(
             data = data,
             sm = self.compiled_model,
-            num_samples = 10, # normally 20 
+            num_samples = 5, # normally 20 
             num_warmup = 0,
             num_chains = 1, # don't change
             log_dir = self.log_dir,
