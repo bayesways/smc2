@@ -151,9 +151,11 @@ class ParticlesLVM(Particles):
     def resample_particles_bundles(self):
         resample_index = get_resample_index(self.weights, self.size)
         for name in self.param_names:
-            self.particles[name] = self.particles[name][resample_index].copy()
+            self.particles[name] = np.copy(self.particles[name][resample_index])
+            # self.particles[name] = self.particles[name][resample_index].copy()
         for name in self.latent_names:
-            self.bundles[name] = self.bundles[name][resample_index].copy()
+            self.bundles[name] = np.copy(self.bundles[name][resample_index])
+            # self.bundles[name] = self.bundles[name][resample_index].copy()
         
 
     def jitter_bundles_and_pick_one(self, data):
@@ -184,12 +186,16 @@ class ParticlesLVM(Particles):
                 if (np.log(u) <= logdiff):
                     self.acceptances[m,t] += 1
                     for name in self.latent_names:
-                        self.bundles[name][m, :, t] = bundle_star[name].copy()
+                        self.bundles[name][m, :, t] = np.copy(bundle_star[name])
+                        # self.bundles[name][m, :, t] = bundle_star[name].copy()
+                        
                     # pick bundle
                     resample_index = get_resample_index(weights_star, 1)[0].astype(int)
-                    self.latent_var_given_theta[m,t] = bundle_star['z'][resample_index].copy()
+                    self.latent_var_given_theta[m,t] = np.copy(bundle_star['z'][resample_index])
+                    # self.latent_var_given_theta[m,t] = bundle_star['z'][resample_index].copy()
                 else:
                     # pick bundle
                     resample_index = get_resample_index(existing_weights, 1)[0].astype(int)
-                    self.latent_var_given_theta[m,t] = self.get_bundles_at_t(t)['z'][m][resample_index].copy()
+                    self.latent_var_given_theta[m,t] = np.copy(self.get_bundles_at_t(t)['z'][m][resample_index])
+                    # self.latent_var_given_theta[m,t] = self.get_bundles_at_t(t)['z'][m][resample_index].copy()
 

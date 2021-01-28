@@ -62,12 +62,12 @@ class Particles:
 
 
     def compile_model(self):
-            self.compiled_model = compile_model(
-                model_num=self.model_num,
-                prior = False,
-                log_dir = self.log_dir,
-                save = True
-                )
+        self.compiled_model = compile_model(
+            model_num=self.model_num,
+            prior = False,
+            log_dir = self.log_dir,
+            save = True
+            )
 
 
     def sample_prior_particles(self, data):

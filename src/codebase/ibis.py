@@ -65,14 +65,19 @@ def sample_prior_particles(
     particles = remove_chain_dim(
         fit_run.extract(
         permuted=False, pars=param_names),
-        param_names
+        param_names,
+        num_samples
     )
     return particles
 
 
-def remove_chain_dim(ps, param_names):
-    for name in param_names:
-        ps[name] = ps[name][:,0].copy()
+def remove_chain_dim(ps, param_names, num_samples):
+    if num_samples>1: 
+        for name in param_names:
+            ps[name] = np.copy(ps[name][:,0])
+    else:
+        for name in param_names:
+            ps[name] = np.copy(ps[name][0,0])
     return ps
 
 
