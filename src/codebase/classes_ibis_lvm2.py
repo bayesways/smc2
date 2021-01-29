@@ -183,9 +183,8 @@ class ParticlesLVM(Particles):
 
     def resample_particles_bundles(self):
         resample_index = get_resample_index(self.weights, self.size)
-        set_trace()
         self.particles = np.copy(self.particles[resample_index])
-        set_trace()
+        print(resample_index)
 
 
     def gather_latent_variables_up_to_t(self, t, data):
@@ -209,6 +208,8 @@ class ParticlesLVM(Particles):
         
     def jitter_bundles_and_pick_one(self, data):
         for m in range(self.size):
-            self.particles[m].sample_latent_particles_star(data)
-            self.particles[m].sample_latent_var_given_theta(data)
+            star = self.particles[m].sample_latent_particles_star2(data)
+            self.particles[m].latent_particles = star
+            set_trace()
+            # self.particles[m].sample_latent_var_given_theta(data)
 

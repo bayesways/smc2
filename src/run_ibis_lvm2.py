@@ -56,7 +56,7 @@ def run_ibis_lvm(
     particles.reset_weights()  # set weights to 0
     particles.initialize_counter(exp_data.get_stan_data())
 
-    for t in tqdm(range(exp_data.size)):
+    for t in tqdm(range(3)):
         particles.sample_latent_bundle_at_t(t, exp_data.get_stan_data_at_t2(t))
         particles.get_theta_incremental_weights_at_t(exp_data.get_stan_data_at_t(t))
         log_lklhds[t] = particles.get_loglikelihood_estimate()
@@ -67,6 +67,7 @@ def run_ibis_lvm(
         #     t + 1
         # ) < exp_data.size:
         if True:
+            print('T is %d'%t)
             particles.add_ess(t)
             particles.resample_particles_bundles()
 
