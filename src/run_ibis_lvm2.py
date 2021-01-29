@@ -62,6 +62,7 @@ def run_ibis_lvm(
         log_lklhds[t] = particles.get_loglikelihood_estimate()
         particles.update_weights()
 
+        
         # if (essl(particles.weights) < degeneracy_limit * particles.size) and (
         #     t + 1
         # ) < exp_data.size:
@@ -73,43 +74,43 @@ def run_ibis_lvm(
                 t+1, 
                 exp_data.get_stan_data_upto_t(t+1)
             )
-            set_trace()
+
             particles.jitter_bundles_and_pick_one(exp_data.get_stan_data_upto_t(t + 1))
-            set_trace()
+            particles.check_latent_particles_are_distinct()
             
-            ## add corr of param before jitter
-            # pre_jitter = dict()
-            # for p in param_names:
-            #     pre_jitter[p] = particles.particles[p].flatten()
-            ####
+    #         ## add corr of param before jitter
+    #         # pre_jitter = dict()
+    #         # for p in param_names:
+    #         #     pre_jitter[p] = particles.particles[p].flatten()
+    #         ####
 
-            particles.jitter(exp_data.get_stan_data_upto_t(t + 1))
+    #         particles.jitter(exp_data.get_stan_data_upto_t(t + 1))
 
-            ## add corr of param
-            # for p in param_names:
-            #     jitter_corrs[p][t] = np.corrcoef(
-            #         pre_jitter[p], particles.particles[p].flatten()
-            #     )[0, 1]
-            ####
+    #         ## add corr of param
+    #         # for p in param_names:
+    #         #     jitter_corrs[p][t] = np.corrcoef(
+    #         #         pre_jitter[p], particles.particles[p].flatten()
+    #         #     )[0, 1]
+    #         ####
             
 
-            particles.reset_weights()
-        else:
-            pass
+    #         particles.reset_weights()
+    #     else:
+    #         pass
 
-        save_obj(t, "t", log_dir)
-        save_obj(particles, "particles", log_dir)
-        save_obj(jitter_corrs, "jitter_corrs", log_dir)
-        save_obj(log_lklhds, "log_lklhds", log_dir)
+    #     save_obj(t, "t", log_dir)
+    #     save_obj(particles, "particles", log_dir)
+    #     save_obj(jitter_corrs, "jitter_corrs", log_dir)
+    #     save_obj(log_lklhds, "log_lklhds", log_dir)
 
-    print("\n\n")
-    marg_lklhd = np.exp(logsumexp(log_lklhds))
-    print("Marginal Likelihood %.5f" % marg_lklhd)
-    save_obj(marg_lklhd, "marg_lklhd", log_dir)
+    # print("\n\n")
+    # marg_lklhd = np.exp(logsumexp(log_lklhds))
+    # print("Marginal Likelihood %.5f" % marg_lklhd)
+    # save_obj(marg_lklhd, "marg_lklhd", log_dir)
 
-    output = dict()
-    output["particles"] = particles
-    output["log_lklhds"] = log_lklhds
-    output["marg_lklhd"] = marg_lklhd
-    output["jitter_corrs"] = jitter_corrs
-    return output
+    # output = dict()
+    # output["particles"] = particles
+    # output["log_lklhds"] = log_lklhds
+    # output["marg_lklhd"] = marg_lklhd
+    # output["jitter_corrs"] = jitter_corrs
+    # return output

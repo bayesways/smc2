@@ -76,6 +76,47 @@ class ParticlesLVM(Particles):
     def add_ess(self, t):
         self.ess[t] = 1
 
+    def extract_particles_in_numpy_array(self, name):
+        if name in self.param_names:
+            dim = list(self.particles[0].particles[name].shape)
+        elif name in self.latent_names:
+            dim = list(self.particles[0].latent_particles[name].shape)
+        else:
+            exit
+        
+        dim.insert(0, self.size)
+        dim = tuple(dim)
+
+        extract_array = np.empty(dim)
+        if name in self.param_names:
+            for m in range(self.size):
+                extract_array[m] = self.particles[m].particles[name]
+        elif name in self.latent_names:
+            for m in range(self.size):
+                extract_array[m] = self.particles[m].latent_particles[name]
+        else:
+            exit
+        return extract_array
+
+    def check_particles_are_distinct(self):
+        for name in self.param_names:
+            ext_part = self.extract_particles_in_numpy_array(name)
+            dim  = ext_part.shape
+            uniq_dim = np.unique(ext_part, axis=0).shape
+            assert dim == uniq_dim
+        for name in self.latent_names:
+            ext_part = self.extract_particles_in_numpy_array(name)
+            dim  = ext_part.shape
+            uniq_dim = np.unique(ext_part, axis=0).shape
+            assert dim == uniq_dim 
+    
+    def check_latent_particles_are_distinct(self):
+        for name in self.latent_names:
+            ext_part = self.extract_particles_in_numpy_array(name)
+            dim  = ext_part.shape
+            uniq_dim = np.unique(ext_part, axis=0).shape
+            assert dim == uniq_dim 
+
     # def get_bundles_at_t(self, t):
     #     # returns a pointer to current values
     #     bundles_at_t = dict()
@@ -115,6 +156,15 @@ class ParticlesLVM(Particles):
             self.particles[m].bundles["y"][:,t] = np.copy(
                 self.particles[m].latent_particles["y"][:, 0]
             )
+            if m>1 and (
+            (
+                self.particles[0].latent_particles['z'][0,0]
+            ) == (
+                self.particles[m].latent_particles['z'][0,0]
+                )
+            ):
+                print('got it')
+                set_trace()
 
     def get_theta_incremental_weights_at_t(self, data):
         weights = np.empty(self.size)
@@ -133,7 +183,9 @@ class ParticlesLVM(Particles):
 
     def resample_particles_bundles(self):
         resample_index = get_resample_index(self.weights, self.size)
+        set_trace()
         self.particles = np.copy(self.particles[resample_index])
+        set_trace()
 
 
     def gather_latent_variables_up_to_t(self, t, data):
