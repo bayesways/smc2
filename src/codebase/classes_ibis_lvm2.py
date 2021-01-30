@@ -115,7 +115,10 @@ class ParticlesLVM(Particles):
             ext_part = self.extract_particles_in_numpy_array(name)
             dim  = ext_part.shape
             uniq_dim = np.unique(ext_part, axis=0).shape
-            assert dim == uniq_dim 
+            if dim != uniq_dim :
+                return False
+            else:
+                pass
 
     # def get_bundles_at_t(self, t):
     #     # returns a pointer to current values
@@ -183,9 +186,9 @@ class ParticlesLVM(Particles):
 
     def resample_particles_bundles(self):
         resample_index = get_resample_index(self.weights, self.size)
-        self.particles = np.copy(self.particles[resample_index])
-        print(resample_index)
-
+        for i in range(self.size):
+            self.particles[i].particles = self.particles[resample_index[i]].particles.copy()
+            self.particles[i].latent_particles = self.particles[resample_index[i]].latent_particles.copy()
 
     def gather_latent_variables_up_to_t(self, t, data):
         for m in range(self.size):
@@ -196,20 +199,11 @@ class ParticlesLVM(Particles):
                 np.copy(self.particles[m].bundles["y"][:,:t])
             )
             self.particles[m].get_bundle_weights(data)
-            # if self.particles[0].latent_particles['z'][0] == self.particles[1].latent_particles['z'][0]:
-            #     set_trace()
-        # wgts = gen_latent_weights_master(
-        #     1,
-        #     # exp_data.get_stan_data_upto_t(t + 1),
-        #     exp_data.get_stan_data_upto_t(4),
-        #     bund,
-        #     particles.bundle_size
-        #     )
+            
         
     def jitter_bundles_and_pick_one(self, data):
         for m in range(self.size):
-            star = self.particles[m].sample_latent_particles_star2(data)
-            self.particles[m].latent_particles = star
-            set_trace()
-            # self.particles[m].sample_latent_var_given_theta(data)
+            # star = self.particles[m].sample_latent_particles_star2(data)
+            self.particles[m].sample_latent_particles_star(data)
+            self.particles[m].sample_latent_var_given_theta(data)
 

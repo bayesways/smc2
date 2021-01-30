@@ -49,8 +49,8 @@ model_num = 7
 ibis = run_ibis_lvm(
     exp_data,
     model_num,
-    2,
-    2,
+    200,
+    50,
     args.gen_model,
     log_dir
     )

@@ -80,7 +80,7 @@ class MCMC:
             self.particles["alpha"],
             self.particles["beta"],
         )
-        self.latent_particles = latent_vars
+        self.latent_particles = latent_vars.copy()
 
     def get_bundle_weights(self, data):
         self.weights = gen_latent_weights_master(

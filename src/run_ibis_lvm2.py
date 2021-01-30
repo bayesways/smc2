@@ -56,7 +56,7 @@ def run_ibis_lvm(
     particles.reset_weights()  # set weights to 0
     particles.initialize_counter(exp_data.get_stan_data())
 
-    for t in tqdm(range(3)):
+    for t in tqdm(range(exp_data.size)):
         particles.sample_latent_bundle_at_t(t, exp_data.get_stan_data_at_t2(t))
         particles.get_theta_incremental_weights_at_t(exp_data.get_stan_data_at_t(t))
         log_lklhds[t] = particles.get_loglikelihood_estimate()
@@ -67,7 +67,6 @@ def run_ibis_lvm(
         #     t + 1
         # ) < exp_data.size:
         if True:
-            print('T is %d'%t)
             particles.add_ess(t)
             particles.resample_particles_bundles()
 
@@ -79,39 +78,40 @@ def run_ibis_lvm(
             particles.jitter_bundles_and_pick_one(exp_data.get_stan_data_upto_t(t + 1))
             particles.check_latent_particles_are_distinct()
             
-    #         ## add corr of param before jitter
-    #         # pre_jitter = dict()
-    #         # for p in param_names:
-    #         #     pre_jitter[p] = particles.particles[p].flatten()
-    #         ####
+            ## add corr of param before jitter
+            # pre_jitter = dict()
+            # for p in param_names:
+            #     pre_jitter[p] = particles.particles[p].flatten()
+            ####
 
-    #         particles.jitter(exp_data.get_stan_data_upto_t(t + 1))
+            particles.jitter(exp_data.get_stan_data_upto_t(t + 1))
 
-    #         ## add corr of param
-    #         # for p in param_names:
-    #         #     jitter_corrs[p][t] = np.corrcoef(
-    #         #         pre_jitter[p], particles.particles[p].flatten()
-    #         #     )[0, 1]
-    #         ####
+            ## add corr of param
+            # for p in param_names:
+            #     jitter_corrs[p][t] = np.corrcoef(
+            #         pre_jitter[p], particles.particles[p].flatten()
+            #     )[0, 1]
+            ####
             
 
-    #         particles.reset_weights()
-    #     else:
-    #         pass
+            particles.reset_weights()
+            particles.check_particles_are_distinct()
+        else:
+            pass
 
-    #     save_obj(t, "t", log_dir)
-    #     save_obj(particles, "particles", log_dir)
-    #     save_obj(jitter_corrs, "jitter_corrs", log_dir)
-    #     save_obj(log_lklhds, "log_lklhds", log_dir)
+        save_obj(t, "t", log_dir)
+        save_obj(particles, "particles", log_dir)
+        save_obj(jitter_corrs, "jitter_corrs", log_dir)
+        save_obj(log_lklhds, "log_lklhds", log_dir)
 
-    # print("\n\n")
-    # marg_lklhd = np.exp(logsumexp(log_lklhds))
-    # print("Marginal Likelihood %.5f" % marg_lklhd)
-    # save_obj(marg_lklhd, "marg_lklhd", log_dir)
+    print("\n\n")
+    marg_lklhd = np.exp(logsumexp(log_lklhds))
+    print("Marginal Likelihood %.5f" % marg_lklhd)
+    save_obj(marg_lklhd, "marg_lklhd", log_dir)
 
-    # output = dict()
-    # output["particles"] = particles
-    # output["log_lklhds"] = log_lklhds
-    # output["marg_lklhd"] = marg_lklhd
-    # output["jitter_corrs"] = jitter_corrs
-    # return output
+    output = dict()
+    output["particles"] = particles
+    output["log_lklhds"] = log_lklhds
+    output["marg_lklhd"] = marg_lklhd
+    output["jitter_corrs"] = jitter_corrs
+    return output
