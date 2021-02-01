@@ -188,7 +188,7 @@ class MCMC:
             data=mcmc_data,
             sm=self.compiled_model,
             num_samples=10,
-            num_warmup=1000,
+            num_warmup=100,
             num_chains=1,
             initial_values = values_dict,
             log_dir=self.log_dir,
