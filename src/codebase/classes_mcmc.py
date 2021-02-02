@@ -90,21 +90,6 @@ class MCMC:
             self.bundle_size,
         )
 
-    def sample_latent_particles_star2(self, data):
-        latent_var_star = generate_latent_variables_bundle(
-            self.bundle_size,
-            data["N"],
-            data["J"],
-            data["K"],  # number of factors
-            self.particles["alpha"],
-            self.particles["beta"],
-        )
-        # weights_star = gen_latent_weights_master(
-        #     self.latent_model_num, data, latent_var_star["y"], self.bundle_size
-        # )
-        return latent_var_star
-
-
     def sample_latent_particles_star(self, data):
         latent_var_star = generate_latent_variables_bundle(
             self.bundle_size,
@@ -121,8 +106,7 @@ class MCMC:
         logdiff = weights_star.mean(axis=0) - self.weights.mean(axis=0)
         for t in range(data["N"]):
             u = np.random.uniform()
-            # if np.log(u) <= logdiff[t]:
-            if True:
+            if np.log(u) <= logdiff[t]:
                 self.acceptance[t] += 1
                 self.latent_particles["z"][:, t] = latent_var_star["z"][:, t]
                 self.latent_particles["y"][:, t] = latent_var_star["y"][

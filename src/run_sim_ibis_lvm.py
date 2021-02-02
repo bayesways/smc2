@@ -8,7 +8,7 @@ from codebase.file_utils import (
     path_backslash
 )
 from codebase.ibis import exp_and_normalise
-from run_ibis_lvm2 import run_ibis_lvm
+from run_ibis_lvm import run_ibis_lvm
 from scipy.special import logsumexp
 from pdb import set_trace
 
@@ -38,7 +38,7 @@ else:
 exp_data = Data(
     name = args.task_handle, 
     model_num = 1,  
-    size = 200,
+    size = 50,
     random_seed = 0
     )
     
@@ -49,8 +49,8 @@ model_num = 7
 ibis = run_ibis_lvm(
     exp_data,
     model_num,
-    1000,
-    100,
+    10,
+    5,
     args.gen_model,
     log_dir
     )
