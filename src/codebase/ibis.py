@@ -1,14 +1,9 @@
-import  pystan
+import pystan
 import sys, os
 import argparse
 from codebase.run_tlk import model_phonebook, model_phonebook_path
 import numpy as np
-from codebase.file_utils import (
-    save_obj,
-    load_obj,
-    make_folder,
-    path_backslash
-)
+from codebase.file_utils import save_obj, load_obj, make_folder, path_backslash
 from codebase.resampling_routines import multinomial
 from scipy.stats import bernoulli, multivariate_normal
 from scipy.special import expit, logsumexp
@@ -17,87 +12,77 @@ from pdb import set_trace
 
 
 def compile_model(model_num, prior, log_dir, save=True):
-    
-    model_bank_path = "./log/compiled_models/model%s/"%model_num
+
+    model_bank_path = "./log/compiled_models/model%s/" % model_num
     if not os.path.exists(model_bank_path):
         os.makedirs(model_bank_path)
 
-    with open(
-        model_phonebook_path(model_num, prior),
-        'r'
-        ) as file:
+    with open(model_phonebook_path(model_num, prior), "r") as file:
         model_code = file.read()
-    
+
     sm = pystan.StanModel(model_code=model_code, verbose=False)
-    
+
     if save:
         if prior:
-            save_obj(sm, 'sm_prior', log_dir)
-            save_obj(sm, 'sm_prior', model_bank_path)
-            file = open('%smodel_prior.txt'%model_bank_path, "w")
+            save_obj(sm, "sm_prior", log_dir)
+            save_obj(sm, "sm_prior", model_bank_path)
+            file = open("%smodel_prior.txt" % model_bank_path, "w")
             file.write(model_code)
             file.close()
         else:
-            save_obj(sm, 'sm', log_dir)
-            save_obj(sm, 'sm', model_bank_path)
-            file = open('%smodel.txt'%model_bank_path, "w")
+            save_obj(sm, "sm", log_dir)
+            save_obj(sm, "sm", model_bank_path)
+            file = open("%smodel.txt" % model_bank_path, "w")
             file.write(model_code)
             file.close()
     return sm
 
 
 def sample_prior_particles(
-    data,
-    sm_prior,
-    param_names,
-    num_samples, 
-    num_chains, 
-    log_dir
-    ):    
+    data, sm_prior, param_names, num_samples, num_chains, log_dir
+):
     fit_run = sm_prior.sampling(
-        data = data,
+        data=data,
         iter=num_samples,
         warmup=0,
         chains=num_chains,
-        algorithm = 'Fixed_param',
-        n_jobs=1
+        algorithm="Fixed_param",
+        n_jobs=1,
     )
     particles = remove_chain_dim(
-        fit_run.extract(
-        permuted=False, pars=param_names),
-        param_names,
-        num_samples
+        fit_run.extract(permuted=False, pars=param_names), param_names, num_samples
     )
     return particles
 
 
 def remove_chain_dim(ps, param_names, num_samples):
-    if num_samples>1: 
+    if num_samples > 1:
         for name in param_names:
-            ps[name] = np.copy(ps[name][:,0])
+            ps[name] = np.copy(ps[name][:, 0])
     else:
         for name in param_names:
-            ps[name] = np.copy(ps[name][0,0])
+            ps[name] = np.copy(ps[name][0, 0])
     return ps
 
 
 def get_initial_values_dict(particles, m):
     particles_dict = dict()
-    for n in particles['param_names']:
-        particles_dict[n] = particles[n][m,0]
+    for n in particles["param_names"]:
+        particles_dict[n] = particles[n][m, 0]
     return particles_dict
 
 
 def set_last_position(particles, m, last_position):
-    for n in particles['param_names']:
+    for n in particles["param_names"]:
         particles[n][m] = last_position[n]
     return particles
 
 
 init_values = dict()
 
+
 def set_initial_values(params):
-    global init_values    # Needed to modify global copy of globvar
+    global init_values  # Needed to modify global copy of globvar
     init_values = params
 
 
@@ -108,39 +93,39 @@ def initf1():
 def run_stan_model(
     data,
     compiled_model,
-    num_samples, 
+    num_samples,
     num_warmup,
     num_chains,
     initial_values=None,
-    inv_metric = None,
-    adapt_engaged = False,
-    stepsize = None
-    ):
+    inv_metric=None,
+    adapt_engaged=False,
+    stepsize=None,
+):
 
     if initial_values is not None:
         set_initial_values(initial_values)
 
-    control={
-        "metric" : "diag_e", # diag_e/dense_e
-        "adapt_delta" : 0.99,
-        "max_treedepth" : 14,
-        "adapt_engaged" : adapt_engaged
-        }
+    control = {
+        "metric": "diag_e",  # diag_e/dense_e
+        "adapt_delta": 0.99,
+        "max_treedepth": 14,
+        "adapt_engaged": adapt_engaged,
+    }
 
     if inv_metric is not None:
-        control['inv_metric'] = inv_metric
+        control["inv_metric"] = inv_metric
     if stepsize is not None:
-        control['stepsize'] = stepsize
+        control["stepsize"] = stepsize
 
     fit_run = compiled_model.sampling(
-        data = data,
+        data=data,
         iter=num_samples + num_warmup,
         warmup=num_warmup,
         chains=num_chains,
         init=initf1,
         control=control,
         n_jobs=1,
-        check_hmc_diagnostics=False
+        check_hmc_diagnostics=False,
     )
 
     return fit_run
@@ -149,37 +134,36 @@ def run_stan_model(
 def run_mcmc(
     data,
     sm,
-    num_samples, 
+    num_samples,
     num_warmup,
     num_chains,
     log_dir,
-    initial_values = None,
-    inv_metric = None,
-    load_inv_metric = False,
-    save_inv_metric = False,
-    adapt_engaged = False,
-    stepsize = None
-    ):
+    initial_values=None,
+    inv_metric=None,
+    load_inv_metric=False,
+    save_inv_metric=False,
+    adapt_engaged=False,
+    stepsize=None,
+):
 
     if load_inv_metric:
-        inv_metric = load_obj('inv_metric', log_dir)
-        
-        
+        inv_metric = load_obj("inv_metric", log_dir)
+
     fit_run = run_stan_model(
         data,
-        compiled_model = sm,
-        num_samples = num_samples, 
-        num_warmup = num_warmup,
-        num_chains = num_chains,
-        initial_values= initial_values,
-        inv_metric= inv_metric,
+        compiled_model=sm,
+        num_samples=num_samples,
+        num_warmup=num_warmup,
+        num_chains=num_chains,
+        initial_values=initial_values,
+        inv_metric=inv_metric,
         adapt_engaged=adapt_engaged,
-        stepsize=stepsize
-        )
+        stepsize=stepsize,
+    )
 
     if save_inv_metric is not None:
         inv_metric = fit_run.get_inv_metric(as_dict=True)
-        save_obj(inv_metric, 'inv_metric', log_dir)
+        save_obj(inv_metric, "inv_metric", log_dir)
 
     return fit_run
 
@@ -225,10 +209,25 @@ def essl(lw):
     and 1 if all weights but one are zero.
     """
     w = np.exp(lw - lw.max())
-    return (w.sum())**2 / np.sum(w**2)
+    return (w.sum()) ** 2 / np.sum(w ** 2)
 
 
 def get_resample_index(weights, size):
     nw = exp_and_normalise(weights)
-    np.testing.assert_allclose(1., nw.sum())  
+    np.testing.assert_allclose(1.0, nw.sum())
     return multinomial(nw, size)
+
+
+def post_process_sign(ps):
+    nsim = ps["beta"].shape[0]
+    nrows = ps["beta"].shape[1]
+    for n in range(nsim):
+        for i in range(nrows):
+            sign = np.sign(ps["beta"][n, 0])
+            ps["beta"][n] = (
+                sign
+                * ps["beta"][
+                    n,
+                ]
+            )
+    return ps

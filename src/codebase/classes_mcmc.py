@@ -28,6 +28,7 @@ class MCMC:
         latent_names,
         bundle_size,
         latent_model_num,
+        adapt_nsim = 100
     ):
         self.name = name
         self.model_num = model_num
@@ -36,6 +37,7 @@ class MCMC:
         self.latent_names = latent_names
         self.bundle_size = bundle_size
         self.latent_model_num = latent_model_num
+        self.adapt_nsim = adapt_nsim
 
     def set_log_dir(self, log_dir):
         self.log_dir = log_dir
@@ -150,9 +152,10 @@ class MCMC:
         fit_run = run_mcmc(
             data=mcmc_data,
             sm=self.compiled_model,
-            num_samples=10,
-            num_warmup=100,
+            num_samples=1,
+            num_warmup=self.adapt_nsim,
             num_chains=1,
+            initial_values = self.particles,
             log_dir=self.log_dir,
             adapt_engaged=True,
         )
@@ -172,7 +175,7 @@ class MCMC:
             data=mcmc_data,
             sm=self.compiled_model,
             num_samples=10,
-            num_warmup=100,
+            num_warmup=500,
             num_chains=1,
             initial_values = values_dict,
             log_dir=self.log_dir,
@@ -190,9 +193,10 @@ class MCMC:
         fit_run = run_mcmc(
             data=mcmc_data,
             sm=self.compiled_model,
-            num_samples=10,
+            num_samples=1,
             num_warmup=0,
             num_chains=1,
+            initial_values = self.particles,
             log_dir=self.log_dir,
             inv_metric=self.mass_matrix,
             adapt_engaged=False,

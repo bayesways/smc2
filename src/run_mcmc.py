@@ -15,6 +15,7 @@ def run_mcmc(
     param_names,
     latent_names,
     log_dir,
+    adapt_nsim,
     name="mcmc",
 ):
 
@@ -26,6 +27,7 @@ def run_mcmc(
         latent_names=latent_names,
         bundle_size=bundle_size,
         latent_model_num=1,
+        adapt_nsim=adapt_nsim
     )
 
     particles.set_log_dir(log_dir)

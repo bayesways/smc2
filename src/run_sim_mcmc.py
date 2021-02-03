@@ -49,6 +49,7 @@ ps = run_mcmc(
     param_names=param_names,
     latent_names=latent_names,
     log_dir=log_dir,
+    adapt_nsim=100
 )
 
 save_obj(ps, "mcmc_post_samples", log_dir)
