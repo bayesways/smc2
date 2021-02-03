@@ -2,6 +2,7 @@ from codebase.classes_mcmc import MCMC
 import numpy as np
 from codebase.file_utils import save_obj, load_obj, make_folder, path_backslash
 from tqdm import tqdm
+from pdb import set_trace
 
 
 def run_mcmc(
@@ -14,6 +15,7 @@ def run_mcmc(
     param_names,
     latent_names,
     log_dir,
+    adapt_nsim,
     name="mcmc",
 ):
 
@@ -25,6 +27,7 @@ def run_mcmc(
         latent_names=latent_names,
         bundle_size=bundle_size,
         latent_model_num=1,
+        adapt_nsim=adapt_nsim
     )
 
     particles.set_log_dir(log_dir)
@@ -37,7 +40,6 @@ def run_mcmc(
         particles.load_model()
 
     particles.sample_prior_particles(stan_data)
-
     betas = np.empty((nsim_mcmc, 6, 1))
     alphas = np.empty((nsim_mcmc, 6))
     zs = np.empty((nsim_mcmc, stan_data["N"], 1))
@@ -51,7 +53,7 @@ def run_mcmc(
         particles.sample_latent_var_given_theta(stan_data)
 
         zs[i] = particles.latent_mcmc_sample["z"]
-        ys[i] = particles.latent_mcmc_sample["y_latent"]
+        ys[i] = particles.latent_mcmc_sample["y"]
 
         if i < num_warmup:
             particles.sample_theta_given_z_and_save_mcmc_parms(stan_data)
@@ -59,7 +61,6 @@ def run_mcmc(
             particles.sample_theta_given_z_with_used_mcmc_params(stan_data)
         alphas[i] = particles.particles["alpha"]
         betas[i] = particles.particles["beta"]
-
     ps = dict()
     ps["alpha"] = alphas
     ps["beta"] = betas

@@ -60,7 +60,7 @@ def generate_latent_variables(
     y_latent = np.squeeze(alpha) +\
         zz @ np.squeeze(beta).reshape(data_J, data_K).T
     latent_vars['z'] = zz
-    latent_vars['y_latent'] = y_latent
+    latent_vars["y"] = y_latent
     return latent_vars
 
 
@@ -89,7 +89,7 @@ def generate_latent_variables_bundle(
             alpha,
             beta)
         zz[m] = bundle_vars['z']
-        y_latent[m] = bundle_vars['y_latent']
+        y_latent[m] = bundle_vars["y"]
     latent_vars['z'] = zz
-    latent_vars['y_latent'] = y_latent
+    latent_vars["y"] = y_latent
     return latent_vars

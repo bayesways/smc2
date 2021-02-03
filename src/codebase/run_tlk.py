@@ -1,19 +1,14 @@
 import sys, os
 
 def model_phonebook_path(model_num, prior, data_type='cont'):
-    if model_num in range(0,6):
-        path_to_stan = './codebase/stancode/cont/'
+    if model_num in range(1,6):
+        path_to_stan = './codebase/stancode/disc/'
     elif model_num in [7,8]:
         path_to_stan = './codebase/stancode/models/'
     else:
         pass
 
-    if model_num == 0:
-        if prior:
-            path = 'saturated/model_0_prior.stan'
-        else:
-            path = 'saturated/model_0.stan'
-    elif model_num == 1:
+    if model_num == 1:
         if prior:
             path = 'CFA/EZ/model_1_prior.stan'
         else:

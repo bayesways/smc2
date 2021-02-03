@@ -38,7 +38,7 @@ exp_data.generate()
 save_obj(exp_data, "data", log_dir)
 
 param_names = ["beta", "alpha"]
-latent_names = ["z", "y_latent"]
+latent_names = ["z", "y"]
 ps = run_mcmc(
     stan_data=exp_data.get_stan_data(),
     nsim_mcmc=100,
@@ -49,6 +49,7 @@ ps = run_mcmc(
     param_names=param_names,
     latent_names=latent_names,
     log_dir=log_dir,
+    adapt_nsim=100
 )
 
 save_obj(ps, "mcmc_post_samples", log_dir)

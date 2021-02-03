@@ -2,13 +2,13 @@ data {
   int<lower=1> N;
   int<lower=1> J;
   int<lower=1> K;
-  matrix[N,K] zz;
   int<lower=0, upper=1> D[N, J];
 }
 
 parameters {
   vector[J] alpha;
   matrix[J,K] beta;
+  matrix[N,K] zz;
 }
 
 transformed parameters{
@@ -18,6 +18,7 @@ transformed parameters{
 
 model {
   to_vector(beta) ~ normal(0, 1);
+  to_vector(zz) ~ normal(0, 1);
   alpha ~ normal(0, 1);
   for (n in 1:N) D[n,] ~ bernoulli_logit(y_latent[n,]);
 }

@@ -38,7 +38,7 @@ else:
 exp_data = Data(
     name = args.task_handle, 
     model_num = 1,  
-    size = 30,
+    size = 50,
     random_seed = 0
     )
     
@@ -49,8 +49,8 @@ model_num = 7
 ibis = run_ibis_lvm(
     exp_data,
     model_num,
-    100,
-    50,
+    10,
+    5,
     args.gen_model,
     log_dir
     )

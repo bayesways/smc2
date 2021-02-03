@@ -31,6 +31,17 @@ class Data:
             stan_data[name] = self.raw_data[name][t]
         return stan_data
 
+    def get_stan_data_at_t2(self, t):
+        stan_data = dict()
+        for name in self.raw_data['stan_constants']:
+            stan_data[name] = self.raw_data[name]
+        stan_data['N'] = 1
+        for name in self.raw_data['stan_data']:
+            stan_data[name] = self.raw_data[name][t].reshape(
+                (1,self.raw_data['J'])
+                )
+        return stan_data
+
     def get_stan_data_upto_t(self, t):
         stan_data = dict()
         for name in self.raw_data['stan_constants']:

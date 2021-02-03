@@ -1,5 +1,8 @@
 from codebase.classes_ibis_lvm import ParticlesLVM
 from codebase.ibis import model_phonebook, essl
+from codebase.mcmc_tlk_latent import (
+    gen_latent_weights_master
+)
 import numpy as np
 from tqdm import tqdm
 from codebase.file_utils import (
@@ -46,42 +49,52 @@ def run_ibis_lvm(
     log_lklhds = np.empty(exp_data.size)
     degeneracy_limit = 0.5
 
-    particles.sample_prior_particles(exp_data.get_stan_data())  # sample prior particles
-    particles.reset_weights()  # set weights to 0
+    particles.initialize_particles()
     particles.initialize_bundles(exp_data.get_stan_data())
     particles.initialize_latent_var_given_theta(exp_data.get_stan_data())
+    particles.sample_prior_particles(exp_data.get_stan_data())  # sample prior particles
+    particles.reset_weights()  # set weights to 0
     particles.initialize_counter(exp_data.get_stan_data())
 
     for t in tqdm(range(exp_data.size)):
-        particles.sample_latent_bundle_at_t(t, exp_data.get_stan_data_at_t(t))
-        particles.get_theta_incremental_weights_at_t(t, exp_data.get_stan_data_at_t(t))
+        particles.sample_latent_bundle_at_t(t, exp_data.get_stan_data_at_t2(t))
+        particles.get_theta_incremental_weights_at_t(exp_data.get_stan_data_at_t(t))
         log_lklhds[t] = particles.get_loglikelihood_estimate()
-
         particles.update_weights()
 
+        
         if (essl(particles.weights) < degeneracy_limit * particles.size) and (
             t + 1
         ) < exp_data.size:
             particles.add_ess(t)
             particles.resample_particles_bundles()
-            particles.jitter_bundles_and_pick_one(exp_data.get_stan_data_upto_t(t + 1))
 
-            ## add corr of param before jitter
+            particles.gather_latent_variables_up_to_t(
+                t+1, 
+                exp_data.get_stan_data_upto_t(t+1)
+            )
+
+            particles.jitter_bundles_and_pick_one(exp_data.get_stan_data_upto_t(t + 1))
+            particles.check_latent_particles_are_distinct()
+            
+            # add corr of param before jitter
             pre_jitter = dict()
             for p in param_names:
-                pre_jitter[p] = particles.particles[p].flatten()
-            ####
+                pre_jitter[p] = particles.particles[0].particles[p].flatten()
+            ###
 
-            particles.jitter(t + 1, exp_data.get_stan_data_upto_t(t + 1))
+            particles.jitter(exp_data.get_stan_data_upto_t(t + 1))
 
-            ## add corr of param
+            # add corr of param
             for p in param_names:
                 jitter_corrs[p][t] = np.corrcoef(
-                    pre_jitter[p], particles.particles[p].flatten()
+                    pre_jitter[p], particles.particles[0].particles[p].flatten()
                 )[0, 1]
-            ####
+            ###
+            
 
             particles.reset_weights()
+            particles.check_particles_are_distinct()
         else:
             pass
 

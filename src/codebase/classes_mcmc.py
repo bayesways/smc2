@@ -16,8 +16,7 @@ from codebase.file_utils import save_obj, load_obj, make_folder, path_backslash
 from codebase.resampling_routines import multinomial
 from scipy.special import logsumexp
 from scipy.stats import norm
-import pdb
-
+from pdb import set_trace
 
 class MCMC:
     def __init__(
@@ -29,6 +28,7 @@ class MCMC:
         latent_names,
         bundle_size,
         latent_model_num,
+        adapt_nsim = 100
     ):
         self.name = name
         self.model_num = model_num
@@ -37,6 +37,7 @@ class MCMC:
         self.latent_names = latent_names
         self.bundle_size = bundle_size
         self.latent_model_num = latent_model_num
+        self.adapt_nsim = adapt_nsim
 
     def set_log_dir(self, log_dir):
         self.log_dir = log_dir
@@ -81,13 +82,13 @@ class MCMC:
             self.particles["alpha"],
             self.particles["beta"],
         )
-        self.latent_particles = latent_vars
+        self.latent_particles = latent_vars.copy()
 
     def get_bundle_weights(self, data):
         self.weights = gen_latent_weights_master(
             self.latent_model_num,
             data,
-            self.latent_particles["y_latent"],
+            self.latent_particles["y"],
             self.bundle_size,
         )
 
@@ -101,7 +102,7 @@ class MCMC:
             self.particles["beta"],
         )
         weights_star = gen_latent_weights_master(
-            self.latent_model_num, data, latent_var_star["y_latent"], self.bundle_size
+            self.latent_model_num, data, latent_var_star["y"], self.bundle_size
         )
         ## Accept/Reject Step
         logdiff = weights_star.mean(axis=0) - self.weights.mean(axis=0)
@@ -109,8 +110,8 @@ class MCMC:
             u = np.random.uniform()
             if np.log(u) <= logdiff[t]:
                 self.acceptance[t] += 1
-                self.latent_particles["z"][:, t] = latent_var_star["z"][:, t].copy()
-                self.latent_particles["y_latent"][:, t] = latent_var_star["y_latent"][
+                self.latent_particles["z"][:, t] = latent_var_star["z"][:, t]
+                self.latent_particles["y"][:, t] = latent_var_star["y"][
                     :, t
                 ].copy()
                 self.weights[:, t] = weights_star[:, t].copy()
@@ -131,12 +132,12 @@ class MCMC:
 
     def sample_theta_given_z(self, data):
         mcmc_data = data.copy()
-        mcmc_data["zz"] = self.latent_mcmc_sample["z"].copy()
+        mcmc_data["zz"] = np.copy(self.latent_mcmc_sample["z"])
         fit_run = run_mcmc(
             data=mcmc_data,
             sm=self.compiled_model,
-            num_samples=1,
-            num_warmup=50,
+            num_samples=10,
+            num_warmup=500,
             num_chains=1,
             log_dir=self.log_dir,
             adapt_engaged=True,
@@ -147,18 +148,41 @@ class MCMC:
 
     def sample_theta_given_z_and_save_mcmc_parms(self, data):
         mcmc_data = data.copy()
-        mcmc_data["zz"] = self.latent_mcmc_sample["z"].copy()
+        mcmc_data["zz"] = np.copy(self.latent_mcmc_sample["z"])
         fit_run = run_mcmc(
             data=mcmc_data,
             sm=self.compiled_model,
-            num_samples=5,
-            num_warmup=50,
+            num_samples=1,
+            num_warmup=self.adapt_nsim,
             num_chains=1,
+            initial_values = self.particles,
             log_dir=self.log_dir,
             adapt_engaged=True,
         )
         self.mass_matrix = fit_run.get_inv_metric(as_dict=True)
         self.stepsize = fit_run.get_stepsize()
+        last_position = fit_run.get_last_position()[0]  # select chain 1
+        for name in self.param_names:
+            self.particles[name] = last_position[name]
+
+    def sample_theta_given_z_and_save_mcmc_parms2(self, data):
+        mcmc_data = data.copy()
+        mcmc_data["zz"] = np.copy(self.latent_mcmc_sample["z"])
+        values_dict = dict()
+        values_dict['alpha'] = np.copy(self.particles['alpha']).reshape(6,)
+        values_dict['beta'] = np.copy(self.particles['beta']).reshape(6,1)
+        fit_run = run_mcmc(
+            data=mcmc_data,
+            sm=self.compiled_model,
+            num_samples=10,
+            num_warmup=500,
+            num_chains=1,
+            initial_values = values_dict,
+            log_dir=self.log_dir,
+            adapt_engaged=True,
+        )
+        save_obj(fit_run.get_inv_metric(as_dict=True), 'mass_matrix', self.log_dir)
+        save_obj(fit_run.get_stepsize(), 'stepsize', self.log_dir)
         last_position = fit_run.get_last_position()[0]  # select chain 1
         for name in self.param_names:
             self.particles[name] = last_position[name]
@@ -169,13 +193,36 @@ class MCMC:
         fit_run = run_mcmc(
             data=mcmc_data,
             sm=self.compiled_model,
-            num_samples=5,
+            num_samples=1,
             num_warmup=0,
             num_chains=1,
+            initial_values = self.particles,
             log_dir=self.log_dir,
             inv_metric=self.mass_matrix,
             adapt_engaged=False,
             stepsize=self.stepsize,
+        )
+        last_position = fit_run.get_last_position()[0]  # select chain 1
+        for name in self.param_names:
+            self.particles[name] = last_position[name]
+
+    def sample_theta_given_z_with_used_mcmc_params2(self, data):
+        mcmc_data = data.copy()
+        mcmc_data["zz"] = np.copy(self.latent_mcmc_sample["z"])
+        values_dict = dict()
+        values_dict['alpha'] = np.copy(self.particles['alpha']).reshape(6,)
+        values_dict['beta'] = np.copy(self.particles['beta']).reshape(6,1)
+        fit_run = run_mcmc(
+            data=mcmc_data,
+            sm=self.compiled_model,
+            num_samples=10,
+            num_warmup=0,
+            num_chains=1,
+            initial_values = values_dict,
+            log_dir=self.log_dir,
+            inv_metric=load_obj('mass_matrix', self.log_dir),
+            adapt_engaged=False,
+            stepsize=load_obj('stepsize', self.log_dir)
         )
         last_position = fit_run.get_last_position()[0]  # select chain 1
         for name in self.param_names:
