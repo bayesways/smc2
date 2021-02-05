@@ -1,4 +1,4 @@
-from codebase.classes_ibis_lvm import ParticlesLVM
+from codebase.classes_smc2 import ParticlesLVM
 from codebase.ibis import model_phonebook, essl
 from codebase.mcmc_tlk_latent import (
     gen_latent_weights_master
@@ -13,7 +13,7 @@ from scipy.special import logsumexp
 from pdb import set_trace
 
 
-def run_ibis_lvm(
+def run_smc2(
     exp_data,
     model_num,
     size,
@@ -21,7 +21,7 @@ def run_ibis_lvm(
     gen_model,
     log_dir,
     degeneracy_limit=0.5,
-    name="ibislvm",
+    name="smc2",
 ):
 
     param_names = model_phonebook(model_num)["param_names"]

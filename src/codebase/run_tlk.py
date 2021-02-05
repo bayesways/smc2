@@ -1,12 +1,7 @@
 import sys, os
 
 def model_phonebook_path(model_num, prior, data_type='cont'):
-    if model_num in range(1,6):
-        path_to_stan = './codebase/stancode/disc/'
-    elif model_num in [7,8]:
-        path_to_stan = './codebase/stancode/models/'
-    else:
-        pass
+    path_to_stan = './codebase/stancode/disc/'
 
     if model_num == 1:
         if prior:
@@ -15,48 +10,28 @@ def model_phonebook_path(model_num, prior, data_type='cont'):
             path = 'CFA/EZ/model_1.stan'
     elif model_num == 2:
         if prior:
-            path = 'CFA/AZ/model2_big5_prior.stan'
+            path = 'smc2/model_1_1factor_prior.stan'
         else:
-            path = 'CFA/AZ/model2_big5.stan'   
-    elif model_num == 3:
-        if prior:
-            path = 'CFA/AZ/model_2_prior.stan'
-        else:
-            path = 'CFA/AZ/model_2.stan'
-    elif model_num == 4:
-        if prior:
-            path = 'EFA/model_1_prior.stan'
-        else:
-            path = 'EFA/model_1.stan'
-    elif model_num == 5:
-        if prior:
-            path = 'EFA/model_2_prior.stan'
-        else:
-            path = 'EFA/model_2.stan'
-    elif model_num == 7:
-        if prior:
-            path = 'ibis/CFA/EZ/model_1_1factor_prior.stan'
-        else:
-            path = 'ibis/CFA/EZ/model_1_1factor.stan'
-    elif model_num == 8:
-        if prior:
-            path = 'ibis/CFA/EZ/model_1_prior.stan'
-        else:
-            path = 'ibis/CFA/EZ/model_1.stan'
+            path = 'smc2/model_1_1factor.stan'
+    # elif model_num == 3:
+    #     if prior:
+    #         path = 'CFA/AZ/model2_big5_prior.stan'
+    #     else:
+    #         path = 'CFA/AZ/model2_big5.stan' 
     else:
         print("model number not found")
         sys.exit()
+    
+    models_dir = './log/compiled_models/model%s'%model_num
+    if not os.path.exists(models_dir):
+        os.makedirs(models_dir)
 
     return path_to_stan+path
 
 
 def model_phonebook(model_num):
     names = dict()
-
-    if model_num == 0:
-        names['param_names'] = ['Marg_cov', 'L_R', 'alpha', 'sigma']
-        names['latent_names'] = []
-    elif model_num == 1:
+    if model_num == 1:
         names['param_names'] = [
             'sigma_square',
             'alpha',
@@ -67,52 +42,21 @@ def model_phonebook(model_num):
             ]
         names['latent_names'] = []
     elif model_num == 2:
-        names['param_names'] = [
-            'sigma_square',
-            'alpha',
-            'beta_free',
-            'beta_zeros',
-            'Phi_cov',
-            'Marg_cov',
-            'beta',
-            'Omega'
-            ]
-        names['latent_names'] = []
-    elif model_num == 3:
-        names['param_names'] = [
-            'sigma_square',
-            'alpha',
-            'beta_free',
-            'beta_zeros',
-            'Phi_cov',
-            'Marg_cov',
-            'beta',
-            'Omega'
-            ]
-        names['latent_names'] = []
-    elif model_num == 4:
-        names['param_names'] = [
-            'sigma_square',
-            'alpha',
-            'Marg_cov',
-            'beta'
-            ]
-        names['latent_names'] = []
-    elif model_num == 5:
-        names['param_names'] = [
-            'sigma_square',
-            'alpha',
-            'Marg_cov',
-            'beta',
-            'Omega'
-            ]
-        names['latent_names'] = []
-    elif model_num == 7:
         names['param_names'] = ['beta', 'alpha']
         names['latent_names'] = ['z', 'y']
-    elif model_num == 8:
-        names['param_names'] = ['beta', 'alpha']
-        names['latent_names'] = ['z', 'y_latent']
+
+    elif model_num == 3 :
+        names['param_names'] = [
+            'sigma_square',
+            'alpha',
+            'beta_free',
+            'beta_zeros',
+            'Phi_cov',
+            'Marg_cov',
+            'beta',
+            'Omega'
+            ]
+        names['latent_names'] = []
     else:
         print("model number not found")
         sys.exit()
