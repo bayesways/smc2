@@ -177,7 +177,7 @@ class MCMC:
             num_samples=10,
             num_warmup=500,
             num_chains=1,
-            initial_values = values_dict,
+            initial_values = self.particles,
             log_dir=self.log_dir,
             adapt_engaged=True,
         )
@@ -218,7 +218,7 @@ class MCMC:
             num_samples=10,
             num_warmup=0,
             num_chains=1,
-            initial_values = values_dict,
+            initial_values = self.particles, 
             log_dir=self.log_dir,
             inv_metric=load_obj('mass_matrix', self.log_dir),
             adapt_engaged=False,

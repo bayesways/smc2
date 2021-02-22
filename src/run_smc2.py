@@ -80,15 +80,14 @@ def run_smc2(
             # add corr of param before jitter
             pre_jitter = dict()
             for p in param_names:
-                pre_jitter[p] = particles.particles[0].particles[p].flatten()
+                pre_jitter[p] = particles.extract_particles_in_numpy_array(p).flatten()
             ###
-
             particles.jitter(exp_data.get_stan_data_upto_t(t + 1))
 
             # add corr of param
             for p in param_names:
                 jitter_corrs[p][t] = np.corrcoef(
-                    pre_jitter[p], particles.particles[0].particles[p].flatten()
+                    pre_jitter[p], particles.extract_particles_in_numpy_array(p).flatten()
                 )[0, 1]
             ###
             
