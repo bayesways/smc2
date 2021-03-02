@@ -108,10 +108,11 @@ class ParticlesLVM(Particles):
 
     def check_particles_are_distinct(self):
         for name in self.param_names:
-            ext_part = self.extract_particles_in_numpy_array(name)
-            dim  = ext_part.shape
-            uniq_dim = np.unique(ext_part, axis=0).shape
-            assert dim == uniq_dim
+            if name!= 'alpha':
+                ext_part = self.extract_particles_in_numpy_array(name)
+                dim  = ext_part.shape
+                uniq_dim = np.unique(ext_part, axis=0).shape
+                assert dim == uniq_dim
         for name in self.latent_names:
             ext_part = self.extract_particles_in_numpy_array(name)
             dim  = ext_part.shape
@@ -123,10 +124,8 @@ class ParticlesLVM(Particles):
             ext_part = self.extract_particles_in_numpy_array(name)
             dim  = ext_part.shape
             uniq_dim = np.unique(ext_part, axis=0).shape
-            if dim != uniq_dim :
-                return False
-            else:
-                pass
+            assert dim == uniq_dim
+
 
     # def get_bundles_at_t(self, t):
     #     # returns a pointer to current values
@@ -146,36 +145,34 @@ class ParticlesLVM(Particles):
         for m in range(self.size):
             self.particles[m].sample_prior_particles(data)
 
-    def generate_latent_bundle(self, alpha, beta, data_t):
-        bundle = dict()
-        zz = np.empty((self.bundle_size, data_t["K"]))
-        y_latent = np.empty((self.bundle_size, data_t["J"]))
-        for l in range(self.bundle_size):
-            bundle_vars = generate_latent_pair(data_t["J"], data_t["K"], alpha, beta)
-            zz[l] = bundle_vars["z"]
-            y_latent[l] = bundle_vars["y"]
-        bundle["z"] = zz
-        bundle["y"] = y_latent
-        return bundle
+    # def generate_latent_bundle(self, alpha, beta, data_t):
+    #     bundle = dict()
+    #     zz = np.empty((self.bundle_size, data_t["K"]))
+    #     y_latent = np.empty((self.bundle_size, data_t["J"]))
+    #     for l in range(self.bundle_size):
+    #         bundle_vars = generate_latent_pair(data_t["J"], data_t["K"], alpha, beta)
+    #         zz[l] = bundle_vars["z"]
+    #         y_latent[l] = bundle_vars["y"]
+    #     bundle["z"] = zz
+    #     bundle["y"] = y_latent
+    #     return bundle
 
     def sample_latent_bundle_at_t(self, t, data_t):
         for m in range(self.size):
-            self.particles[m].sample_latent_variables(data_t)
-            self.particles[m].bundles["z"][:,t] = np.copy(
-                self.particles[m].latent_particles["z"][:, 0]
-            )
-            self.particles[m].bundles["y"][:,t] = np.copy(
-                self.particles[m].latent_particles["y"][:, 0]
-            )
-            if m>1 and (
-            (
-                self.particles[0].latent_particles['z'][0,0]
-            ) == (
-                self.particles[m].latent_particles['z'][0,0]
-                )
-            ):
-                print('got it')
-                set_trace()
+            # use sample_latent_variables2 function
+            latent_vars = self.particles[m].sample_latent_variables2(data_t)
+
+            # so we need to initialize particles if we do it this way 
+            latent_particles = dict()
+            latent_particles['z'] = np.empty((self.bundle_size, 1, 1))
+            latent_particles['y'] = np.empty((self.bundle_size, 1, 6))
+            self.particles[m].latent_particles = latent_particles
+            
+            self.particles[m].latent_particles["z"] = latent_vars['z']
+            self.particles[m].latent_particles["y"] = latent_vars['y']
+
+            self.particles[m].bundles["z"][:,t] = latent_vars['z'][:,0]
+            self.particles[m].bundles["y"][:,t] = latent_vars["y"][:, 0] 
 
     def get_theta_incremental_weights_at_t(self, data):
         weights = np.empty(self.size)
@@ -185,9 +182,12 @@ class ParticlesLVM(Particles):
         self.incremental_weights = weights
 
     def jitter(self, data):
+        # for m in range(self.size):
+        #     self.particles[m].sample_theta_given_z_and_save_mcmc_parms2(data)
         self.particles[0].sample_theta_given_z_and_save_mcmc_parms2(data)
         for m in range(1, self.size):
             self.particles[m].sample_theta_given_z_with_used_mcmc_params2(data)
+
 
     def resample_particles_bundles(self):
         resample_index = get_resample_index(self.weights, self.size)
@@ -204,10 +204,13 @@ class ParticlesLVM(Particles):
                 np.copy(self.particles[m].bundles["y"][:,:t])
             )
             self.particles[m].get_bundle_weights(data)
-            
-        
+            #produces self.particles[m].weights with dim (bundlesize, dataN)
+
     def jitter_bundles_and_pick_one(self, data):
         for m in range(self.size):
             self.particles[m].sample_latent_particles_star(data)
             self.particles[m].sample_latent_var_given_theta(data)
+
+        
+
 

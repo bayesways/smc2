@@ -137,7 +137,6 @@ def gen_data_1(
         np.random.seed(random_seed)
 
     alpha = np.array([-0.53,  0.35, -1.4 , -1.4 , -0.96, -2.33])
-    # alpha = np.zeros(J)
     beta = np.array([1, 0.7, .8, .5, .9, .6])
 
     zz = norm.rvs(size=nsim_data)

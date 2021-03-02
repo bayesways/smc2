@@ -17,7 +17,6 @@ def gen_latent_weights_master(
             bundle_size
             )
 
-
 def get_latent_weights_1(
     data,
     y_latent,
@@ -43,7 +42,6 @@ def get_latent_weights_1(
             ).sum()
     return weights
 
-
 def generate_latent_variables(
     data_N,
     data_J,
@@ -62,8 +60,6 @@ def generate_latent_variables(
     latent_vars['z'] = zz
     latent_vars["y"] = y_latent
     return latent_vars
-
-
 
 def generate_latent_variables_bundle(
     bundle_size,

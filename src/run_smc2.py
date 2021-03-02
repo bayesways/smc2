@@ -57,18 +57,19 @@ def run_smc2(
     particles.initialize_counter(exp_data.get_stan_data())
 
     for t in tqdm(range(exp_data.size)):
+
         particles.sample_latent_bundle_at_t(t, exp_data.get_stan_data_at_t2(t))
         particles.get_theta_incremental_weights_at_t(exp_data.get_stan_data_at_t(t))
         log_lklhds[t] = particles.get_loglikelihood_estimate()
         particles.update_weights()
 
         
-        if (essl(particles.weights) < degeneracy_limit * particles.size) and (
+        if (essl(particles.weights) < degeneracy_limit * particles.size) or (
             t + 1
-        ) < exp_data.size:
+        ) == exp_data.size:
             particles.add_ess(t)
             particles.resample_particles_bundles()
-
+            
             particles.gather_latent_variables_up_to_t(
                 t+1, 
                 exp_data.get_stan_data_upto_t(t+1)

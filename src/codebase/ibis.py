@@ -220,14 +220,12 @@ def get_resample_index(weights, size):
 
 def post_process_sign(ps):
     nsim = ps["beta"].shape[0]
-    nrows = ps["beta"].shape[1]
     for n in range(nsim):
-        for i in range(nrows):
-            sign = np.sign(ps["beta"][n, 0])
-            ps["beta"][n] = (
-                sign
-                * ps["beta"][
-                    n,
-                ]
-            )
+        sign = np.sign(ps["beta"][n, 0])
+        ps["beta"][n] = (
+            sign
+            * ps["beta"][
+                n,
+            ]
+        )
     return ps

@@ -13,8 +13,10 @@ transformed data{
 generated quantities{
   vector[J] alpha;
   matrix[J,K] beta;
-  for (j in 1:J) alpha[j] = normal_rng(0,10);
+  real beta1;
+  beta1 = normal_rng(0,1);
+  alpha = rep_vector(0, J);
   for (j in 1:J){
-    for (k in 1:K)  beta[j,k] = normal_rng(0,1);
+    for (k in 1:K)  beta[j,k] = beta1;
   }
 }

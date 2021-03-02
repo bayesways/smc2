@@ -28,7 +28,8 @@ class MCMC:
         latent_names,
         bundle_size,
         latent_model_num,
-        adapt_nsim = 100
+        adapt_nsim = 100,
+        post_adapt_nsim = 5
     ):
         self.name = name
         self.model_num = model_num
@@ -38,6 +39,7 @@ class MCMC:
         self.bundle_size = bundle_size
         self.latent_model_num = latent_model_num
         self.adapt_nsim = adapt_nsim
+        self.post_adapt_nsim = post_adapt_nsim
 
     def set_log_dir(self, log_dir):
         self.log_dir = log_dir
@@ -83,6 +85,17 @@ class MCMC:
             self.particles["beta"],
         )
         self.latent_particles = latent_vars.copy()
+    
+    def sample_latent_variables2(self, data):
+        latent_vars = generate_latent_variables_bundle(
+            self.bundle_size,  # don't need
+            data["N"],
+            data["J"],
+            1,  # number of factors
+            self.particles["alpha"],
+            self.particles["beta"],
+        )
+        return latent_vars
 
     def get_bundle_weights(self, data):
         self.weights = gen_latent_weights_master(
@@ -110,7 +123,7 @@ class MCMC:
             u = np.random.uniform()
             if np.log(u) <= logdiff[t]:
                 self.acceptance[t] += 1
-                self.latent_particles["z"][:, t] = latent_var_star["z"][:, t]
+                self.latent_particles["z"][:, t] = latent_var_star["z"][:, t].copy()
                 self.latent_particles["y"][:, t] = latent_var_star["y"][
                     :, t
                 ].copy()
@@ -152,7 +165,7 @@ class MCMC:
         fit_run = run_mcmc(
             data=mcmc_data,
             sm=self.compiled_model,
-            num_samples=1,
+            num_samples=self.post_adapt_nsim,
             num_warmup=self.adapt_nsim,
             num_chains=1,
             initial_values = self.particles,
@@ -168,14 +181,14 @@ class MCMC:
     def sample_theta_given_z_and_save_mcmc_parms2(self, data):
         mcmc_data = data.copy()
         mcmc_data["zz"] = np.copy(self.latent_mcmc_sample["z"])
-        values_dict = dict()
-        values_dict['alpha'] = np.copy(self.particles['alpha']).reshape(6,)
-        values_dict['beta'] = np.copy(self.particles['beta']).reshape(6,1)
+        # values_dict = dict()
+        # values_dict['alpha'] = np.copy(self.particles['alpha']).reshape(6,)
+        # values_dict['beta'] = np.copy(self.particles['beta']).reshape(6,1)
         fit_run = run_mcmc(
             data=mcmc_data,
             sm=self.compiled_model,
-            num_samples=10,
-            num_warmup=500,
+            num_samples=5,
+            num_warmup=100,
             num_chains=1,
             initial_values = self.particles,
             log_dir=self.log_dir,
@@ -193,7 +206,7 @@ class MCMC:
         fit_run = run_mcmc(
             data=mcmc_data,
             sm=self.compiled_model,
-            num_samples=1,
+            num_samples=self.post_adapt_nsim,
             num_warmup=0,
             num_chains=1,
             initial_values = self.particles,
@@ -209,13 +222,13 @@ class MCMC:
     def sample_theta_given_z_with_used_mcmc_params2(self, data):
         mcmc_data = data.copy()
         mcmc_data["zz"] = np.copy(self.latent_mcmc_sample["z"])
-        values_dict = dict()
-        values_dict['alpha'] = np.copy(self.particles['alpha']).reshape(6,)
-        values_dict['beta'] = np.copy(self.particles['beta']).reshape(6,1)
+        # values_dict = dict()
+        # values_dict['alpha'] = np.copy(self.particles['alpha']).reshape(6,)
+        # values_dict['beta'] = np.copy(self.particles['beta']).reshape(6,1)
         fit_run = run_mcmc(
             data=mcmc_data,
             sm=self.compiled_model,
-            num_samples=10,
+            num_samples=5,
             num_warmup=0,
             num_chains=1,
             initial_values = self.particles, 

@@ -13,6 +13,16 @@ def model_phonebook_path(model_num, prior, data_type='cont'):
             path = 'smc2/model_1_1factor_prior.stan'
         else:
             path = 'smc2/model_1_1factor.stan'
+    elif model_num == 3:
+        if prior:
+            path = 'smc2/model_1_1factor_prior2.stan'
+        else:
+            path = 'smc2/model_1_1factor2.stan'
+    elif model_num == 4:
+        if prior:
+            path = 'smc2/model_1_1factor_prior3.stan'
+        else:
+            path = 'smc2/model_1_1factor3.stan'
     # elif model_num == 3:
     #     if prior:
     #         path = 'CFA/AZ/model2_big5_prior.stan'
@@ -44,19 +54,24 @@ def model_phonebook(model_num):
     elif model_num == 2:
         names['param_names'] = ['beta', 'alpha']
         names['latent_names'] = ['z', 'y']
-
-    elif model_num == 3 :
-        names['param_names'] = [
-            'sigma_square',
-            'alpha',
-            'beta_free',
-            'beta_zeros',
-            'Phi_cov',
-            'Marg_cov',
-            'beta',
-            'Omega'
-            ]
-        names['latent_names'] = []
+    elif model_num == 3:
+        names['param_names'] = ['beta', 'alpha']
+        names['latent_names'] = ['z', 'y']
+    elif model_num == 4:
+        names['param_names'] = ['beta', 'alpha']
+        names['latent_names'] = ['z', 'y']
+    # elif model_num == 3 :
+    #     names['param_names'] = [
+    #         'sigma_square',
+    #         'alpha',
+    #         'beta_free',
+    #         'beta_zeros',
+    #         'Phi_cov',
+    #         'Marg_cov',
+    #         'beta',
+    #         'Omega'
+    #         ]
+    #     names['latent_names'] = []
     else:
         print("model number not found")
         sys.exit()
