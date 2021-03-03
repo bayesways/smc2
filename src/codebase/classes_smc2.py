@@ -8,7 +8,7 @@ from codebase.ibis import (
     exp_and_normalise,
 )
 from codebase.classes_mcmc import MCMC
-from run_mcmc import run_mcmc
+from run_mcmc import run_mcmc_jitter
 from codebase.ibis_tlk_latent import (
     get_weight_matrix_for_particle,
     initialize_bundles,
@@ -50,7 +50,6 @@ class ParticlesLVM(Particles):
             theta_m = MCMC(
                 name=self.name,
                 model_num=self.model_num,
-                nsim=1,
                 param_names=self.param_names,
                 latent_names=self.latent_names,
                 bundle_size=self.bundle_size,
@@ -182,20 +181,34 @@ class ParticlesLVM(Particles):
             weights[m] = self.particles[m].weights.mean()
         self.incremental_weights = weights
 
-    def jitter(self, data):
-        ps = run_mcmc(
-            stan_data=data,
-            nsim_mcmc=100,
-            num_warmup=10,
-            model_num=self.model_num,
-            bundle_size=self.bundle_size,
-            gen_model=False,
-            param_names=self.param_names,
-            latent_names=self.latent_names,
-            log_dir=self.log_dir,
-            adapt_nsim=100,
-            post_adapt_nsim=5
+    def run_jitter_save_parameters(self, data, initial_values):
+        ps = run_mcmc_jitter(
+            stan_data = data,
+            nsim_mcmc = 1,
+            num_warmup = 1,
+            model_num = self.model_num,
+            bundle_size = self.bundle_size,
+            gen_model = False,
+            param_names = self.param_names,
+            latent_names = self.latent_names,
+            initial_values = initial_values,
+            log_dir = self.log_dir,
+            hmc_adapt_nsim = 100,
+            hmc_post_adapt_nsim = 10,
+            name="mcmc",
         )
+        return ps
+
+    def jitter(self, data, t):
+        for m in range(self.size):
+            jitter_particles = self.run_jitter_save_parameters(
+                data,
+                self.particles[m].particles
+                )
+            self.particles[m].particles = jitter_particles.particles.copy()
+            self.particles[m].bundles['z'][:,:t] = np.copy(jitter_particles.latent_particles["z"])
+            self.particles[m].bundles['y'][:,:t] = np.copy(jitter_particles.latent_particles["y"])
+
         # for m in range(self.size):
         #     self.particles[m].sample_theta_given_z_and_save_mcmc_parms2(data)
         # self.particles[0].sample_theta_given_z_and_save_mcmc_parms2(data)

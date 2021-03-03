@@ -74,13 +74,12 @@ def run_smc2(
                 t+1, 
                 exp_data.get_stan_data_upto_t(t+1)
             )
-
             # add corr of param before jitter
             pre_jitter = dict()
             for p in param_names:
                 pre_jitter[p] = particles.extract_particles_in_numpy_array(p).flatten()
             ###
-            particles.jitter(exp_data.get_stan_data_upto_t(t + 1))
+            particles.jitter(exp_data.get_stan_data_upto_t(t + 1), t+1)
 
             # add corr of param
             for p in param_names:
@@ -89,9 +88,9 @@ def run_smc2(
                 )[0, 1]
             ###
             
+            particles.check_particles_are_distinct()
 
             particles.reset_weights()
-            particles.check_particles_are_distinct()
         else:
             pass
 
