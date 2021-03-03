@@ -16,6 +16,7 @@ from codebase.file_utils import save_obj, load_obj, make_folder, path_backslash
 from codebase.resampling_routines import multinomial
 from scipy.special import logsumexp
 from scipy.stats import norm
+from shutil import copyfile
 from pdb import set_trace
 
 class MCMC:
@@ -23,23 +24,22 @@ class MCMC:
         self,
         name,
         model_num,
-        nsim,
         param_names,
         latent_names,
         bundle_size,
         latent_model_num,
-        adapt_nsim = 100,
-        post_adapt_nsim = 5
+        hmc_adapt_nsim = 100,
+        hmc_post_adapt_nsim = 5
     ):
         self.name = name
         self.model_num = model_num
-        self.size = nsim
+        self.size = 1
         self.param_names = param_names
         self.latent_names = latent_names
         self.bundle_size = bundle_size
         self.latent_model_num = latent_model_num
-        self.adapt_nsim = adapt_nsim
-        self.post_adapt_nsim = post_adapt_nsim
+        self.hmc_adapt_nsim = hmc_adapt_nsim
+        self.hmc_post_adapt_nsim = hmc_post_adapt_nsim
 
     def set_log_dir(self, log_dir):
         self.log_dir = log_dir
@@ -48,16 +48,25 @@ class MCMC:
         self.compiled_prior_model = load_obj(
             "sm_prior", "./log/compiled_models/model%s/" % self.model_num
         )
+        copyfile(
+            "./log/compiled_models/model%s/model_prior.txt" % self.model_num,
+            "%s/model_prior.txt"%self.log_dir
+            )
 
     def load_model(self):
         self.compiled_model = load_obj(
             "sm", "./log/compiled_models/model%s/" % self.model_num
         )
+        copyfile(
+            "./log/compiled_models/model%s/model.txt" % self.model_num,
+            "%s/model.txt"%self.log_dir
+            )
 
     def compile_prior_model(self):
         self.compiled_prior_model = compile_model(
             model_num=self.model_num, prior=True, log_dir=self.log_dir, save=True
         )
+        
 
     def compile_model(self):
         self.compiled_model = compile_model(
@@ -165,8 +174,8 @@ class MCMC:
         fit_run = run_mcmc(
             data=mcmc_data,
             sm=self.compiled_model,
-            num_samples=self.post_adapt_nsim,
-            num_warmup=self.adapt_nsim,
+            num_samples=self.hmc_post_adapt_nsim,
+            num_warmup=self.hmc_adapt_nsim,
             num_chains=1,
             initial_values = self.particles,
             log_dir=self.log_dir,
@@ -206,7 +215,7 @@ class MCMC:
         fit_run = run_mcmc(
             data=mcmc_data,
             sm=self.compiled_model,
-            num_samples=self.post_adapt_nsim,
+            num_samples=self.hmc_post_adapt_nsim,
             num_warmup=0,
             num_chains=1,
             initial_values = self.particles,

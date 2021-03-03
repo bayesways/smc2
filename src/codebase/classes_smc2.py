@@ -8,6 +8,7 @@ from codebase.ibis import (
     exp_and_normalise,
 )
 from codebase.classes_mcmc import MCMC
+from run_mcmc import run_mcmc
 from codebase.ibis_tlk_latent import (
     get_weight_matrix_for_particle,
     initialize_bundles,
@@ -182,11 +183,24 @@ class ParticlesLVM(Particles):
         self.incremental_weights = weights
 
     def jitter(self, data):
+        ps = run_mcmc(
+            stan_data=data,
+            nsim_mcmc=100,
+            num_warmup=10,
+            model_num=self.model_num,
+            bundle_size=self.bundle_size,
+            gen_model=False,
+            param_names=self.param_names,
+            latent_names=self.latent_names,
+            log_dir=self.log_dir,
+            adapt_nsim=100,
+            post_adapt_nsim=5
+        )
         # for m in range(self.size):
         #     self.particles[m].sample_theta_given_z_and_save_mcmc_parms2(data)
-        self.particles[0].sample_theta_given_z_and_save_mcmc_parms2(data)
-        for m in range(1, self.size):
-            self.particles[m].sample_theta_given_z_with_used_mcmc_params2(data)
+        # self.particles[0].sample_theta_given_z_and_save_mcmc_parms2(data)
+        # for m in range(1, self.size):
+        #     self.particles[m].sample_theta_given_z_with_used_mcmc_params2(data)
 
 
     def resample_particles_bundles(self):

@@ -5,7 +5,7 @@ from tqdm import tqdm
 from pdb import set_trace
 
 
-def run_mcmc(
+def run_mcmc_from_start(
     stan_data,
     nsim_mcmc,
     num_warmup,
@@ -15,21 +15,20 @@ def run_mcmc(
     param_names,
     latent_names,
     log_dir,
-    adapt_nsim,
-    post_adapt_nsim,
+    hmc_adapt_nsim,
+    hmc_post_adapt_nsim,
     name="mcmc",
 ):
 
     particles = MCMC(
         name=name,
         model_num=model_num,
-        nsim=1,
         param_names=param_names,
         latent_names=latent_names,
         bundle_size=bundle_size,
         latent_model_num=1,
-        adapt_nsim=adapt_nsim,
-        post_adapt_nsim=post_adapt_nsim
+        hmc_adapt_nsim=hmc_adapt_nsim,
+        hmc_post_adapt_nsim=hmc_post_adapt_nsim
     )
 
     particles.set_log_dir(log_dir)

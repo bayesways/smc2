@@ -1,5 +1,5 @@
 from codebase.classes_data import Data
-from run_mcmc import run_mcmc
+from run_mcmc import run_mcmc_from_start
 import argparse
 import numpy as np
 from codebase.file_utils import save_obj, load_obj, make_folder, path_backslash
@@ -39,17 +39,18 @@ save_obj(exp_data, "data", log_dir)
 
 param_names = ["beta", "alpha"]
 latent_names = ["z", "y"]
-ps = run_mcmc(
+ps = run_mcmc_from_start(
     stan_data=exp_data.get_stan_data(),
-    nsim_mcmc=100,
-    num_warmup=10,
-    model_num=2,
+    nsim_mcmc=10,
+    num_warmup=2,
+    model_num=3,
     bundle_size=10,
     gen_model=args.gen_model,
     param_names=param_names,
     latent_names=latent_names,
     log_dir=log_dir,
-    adapt_nsim=100
+    hmc_adapt_nsim=10,
+    hmc_post_adapt_nsim=5
 )
 
 save_obj(ps, "mcmc_post_samples", log_dir)

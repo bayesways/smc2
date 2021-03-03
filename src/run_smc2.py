@@ -75,9 +75,6 @@ def run_smc2(
                 exp_data.get_stan_data_upto_t(t+1)
             )
 
-            particles.jitter_bundles_and_pick_one(exp_data.get_stan_data_upto_t(t + 1))
-            particles.check_latent_particles_are_distinct()
-            
             # add corr of param before jitter
             pre_jitter = dict()
             for p in param_names:

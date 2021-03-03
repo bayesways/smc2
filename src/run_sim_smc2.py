@@ -39,4 +39,4 @@ exp_data.generate()
 save_obj(exp_data, "data", log_dir)
 model_num = 3
 
-smc2 = run_smc2(exp_data, model_num, 500, 50, args.gen_model, log_dir)
+smc2 = run_smc2(exp_data, model_num, 11, 7, args.gen_model, log_dir)
