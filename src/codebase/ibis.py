@@ -228,7 +228,6 @@ def get_resample_index(weights, size):
     np.testing.assert_allclose(1.0, nw.sum())
     return multinomial(nw, size)
 
-
 def post_process_sign(ps):
     nsim = ps["beta"].shape[0]
     for n in range(nsim):
@@ -240,3 +239,18 @@ def post_process_sign(ps):
             ]
         )
     return ps
+
+def corrcoef_2D(a, b):
+    assert a.shape == b.shape
+    corrs = np.empty(a.shape[1:])
+    if corrs.ndim == 1:
+        n = corrs.shape[0]
+        for i in range(n):
+            corrs[i] = np.corrcoef(a[:,i], b[:,i])[0,1]
+    else:
+        n = corrs.shape[0]
+        p = corrs.shape[1]
+        for i in range(n):
+            for j in range(p):
+                corrs[i,j] = np.corrcoef(a[:,i,j], b[:,i,j])[0,1]
+    return corrs

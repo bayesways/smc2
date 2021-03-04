@@ -152,22 +152,6 @@ class MCMC:
             ].copy()
         self.latent_mcmc_sample = samples
 
-    def sample_theta_given_z(self, data):
-        mcmc_data = data.copy()
-        mcmc_data["zz"] = np.copy(self.latent_mcmc_sample["z"])
-        fit_run = run_mcmc(
-            data=mcmc_data,
-            sm=self.compiled_model,
-            num_samples=10,
-            num_warmup=500,
-            num_chains=1,
-            log_dir=self.log_dir,
-            adapt_engaged=True,
-        )
-        last_position = fit_run.get_last_position()[0]  # select chain 1
-        for name in self.param_names:
-            self.particles[name] = last_position[name]
-
     def sample_theta_given_z_and_save_mcmc_parms(self, data):
         mcmc_data = data.copy()
         mcmc_data["zz"] = np.copy(self.latent_mcmc_sample["z"])
@@ -187,28 +171,6 @@ class MCMC:
         for name in self.param_names:
             self.particles[name] = last_position[name]
 
-    def sample_theta_given_z_and_save_mcmc_parms2(self, data):
-        mcmc_data = data.copy()
-        mcmc_data["zz"] = np.copy(self.latent_mcmc_sample["z"])
-        # values_dict = dict()
-        # values_dict['alpha'] = np.copy(self.particles['alpha']).reshape(6,)
-        # values_dict['beta'] = np.copy(self.particles['beta']).reshape(6,1)
-        fit_run = run_mcmc(
-            data=mcmc_data,
-            sm=self.compiled_model,
-            num_samples=5,
-            num_warmup=100,
-            num_chains=1,
-            initial_values = self.particles,
-            log_dir=self.log_dir,
-            adapt_engaged=True,
-        )
-        save_obj(fit_run.get_inv_metric(as_dict=True), 'mass_matrix', self.log_dir)
-        save_obj(fit_run.get_stepsize(), 'stepsize', self.log_dir)
-        last_position = fit_run.get_last_position()[0]  # select chain 1
-        for name in self.param_names:
-            self.particles[name] = last_position[name]
-
     def sample_theta_given_z_with_used_mcmc_params(self, data):
         mcmc_data = data.copy()
         mcmc_data["zz"] = self.latent_mcmc_sample["z"].copy()
@@ -223,28 +185,6 @@ class MCMC:
             inv_metric=self.mass_matrix,
             adapt_engaged=False,
             stepsize=self.stepsize,
-        )
-        last_position = fit_run.get_last_position()[0]  # select chain 1
-        for name in self.param_names:
-            self.particles[name] = last_position[name]
-
-    def sample_theta_given_z_with_used_mcmc_params2(self, data):
-        mcmc_data = data.copy()
-        mcmc_data["zz"] = np.copy(self.latent_mcmc_sample["z"])
-        # values_dict = dict()
-        # values_dict['alpha'] = np.copy(self.particles['alpha']).reshape(6,)
-        # values_dict['beta'] = np.copy(self.particles['beta']).reshape(6,1)
-        fit_run = run_mcmc(
-            data=mcmc_data,
-            sm=self.compiled_model,
-            num_samples=5,
-            num_warmup=0,
-            num_chains=1,
-            initial_values = self.particles, 
-            log_dir=self.log_dir,
-            inv_metric=load_obj('mass_matrix', self.log_dir),
-            adapt_engaged=False,
-            stepsize=load_obj('stepsize', self.log_dir)
         )
         last_position = fit_run.get_last_position()[0]  # select chain 1
         for name in self.param_names:
