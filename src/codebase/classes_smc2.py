@@ -46,7 +46,7 @@ class ParticlesLVM(Particles):
         self.mcmc_nsim = mcmc_nsim
         self.mcmc_adapt_nsim = mcmc_adapt_nsim
         self.hmc_adapt_nsim = hmc_adapt_nsim
-        self.hmc_post_adapt_nsim = hmc_adapt_nsim
+        self.hmc_post_adapt_nsim = hmc_post_adapt_nsim
 
     def initialize_counter(self, data):
         self.ess = np.zeros((data["N"], data["N"]))

@@ -36,8 +36,8 @@ def run_smc2(
         param_names=param_names,
         latent_names=latent_names,
         latent_model_num=1,
-        mcmc_nsim = 10,
-        mcmc_adapt_nsim = 1,
+        mcmc_nsim = 15,
+        mcmc_adapt_nsim = 10,
         hmc_adapt_nsim = 200,
         hmc_post_adapt_nsim = 5,
     )

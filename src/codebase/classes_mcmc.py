@@ -61,6 +61,8 @@ class MCMC:
             "./log/compiled_models/model%s/model.txt" % self.model_num,
             "%s/model.txt"%self.log_dir
             )
+        self.mass_matrix = None
+        self.stepsize = None
 
     def compile_prior_model(self):
         self.compiled_prior_model = compile_model(
@@ -72,6 +74,8 @@ class MCMC:
         self.compiled_model = compile_model(
             model_num=self.model_num, prior=False, log_dir=self.log_dir, save=True
         )
+        self.mass_matrix = None
+        self.stepsize = None
 
     def sample_prior_particles(self, data):
         self.acceptance = np.zeros(data["N"])
@@ -163,7 +167,9 @@ class MCMC:
             num_chains=1,
             initial_values = self.particles,
             log_dir=self.log_dir,
+            inv_metric=self.mass_matrix,
             adapt_engaged=True,
+            stepsize=self.stepsize,
         )
         self.mass_matrix = fit_run.get_inv_metric(as_dict=True)
         self.stepsize = fit_run.get_stepsize()

@@ -42,14 +42,14 @@ latent_names = ["z", "y"]
 ps = run_mcmc_from_start(
     stan_data=exp_data.get_stan_data(),
     mcmc_nsim = 10,
-    mcmc_adapt_nsim= 2,
+    mcmc_adapt_nsim= 4,
     model_num=3,
     bundle_size=10,
     gen_model=args.gen_model,
     param_names=param_names,
     latent_names=latent_names,
     log_dir=log_dir,
-    hmc_adapt_nsim=10,
+    hmc_adapt_nsim=200,
     hmc_post_adapt_nsim=5
 )
 

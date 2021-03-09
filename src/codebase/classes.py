@@ -17,6 +17,7 @@ from codebase.file_utils import (
 )
 from codebase.resampling_routines import multinomial
 from scipy.special import logsumexp
+from shutil import copyfile
 from pdb import set_trace
 
 class Particles:
@@ -39,35 +40,71 @@ class Particles:
         self.log_dir = log_dir
 
 
+    # def load_prior_model(self):
+    #     self.compiled_prior_model = load_obj(
+    #         'sm_prior',
+    #         "./log/compiled_models/model%s/"%self.model_num
+    #         )
+
+
+    # def load_model(self):
+    #     self.compiled_model = load_obj(
+    #         'sm',
+    #         "./log/compiled_models/model%s/"%self.model_num
+    #         )
+    #     self.mass_matrix = None
+    #     self.stepsize = None
+
+    # def compile_prior_model(self):
+    #     self.compiled_prior_model = compile_model(
+    #         model_num=self.model_num,
+    #         prior = True,
+    #         log_dir = self.log_dir,
+    #         save = True
+    #         )
+
+
+    # def compile_model(self):
+    #     self.compiled_model = compile_model(
+    #         model_num=self.model_num,
+    #         prior = False,
+    #         log_dir = self.log_dir,
+    #         save = True
+    #         )
+    #     self.mass_matrix = None
+    #     self.stepsize = None
     def load_prior_model(self):
         self.compiled_prior_model = load_obj(
-            'sm_prior',
-            "./log/compiled_models/model%s/"%self.model_num
+            "sm_prior", "./log/compiled_models/model%s/" % self.model_num
+        )
+        copyfile(
+            "./log/compiled_models/model%s/model_prior.txt" % self.model_num,
+            "%s/model_prior.txt"%self.log_dir
             )
-
 
     def load_model(self):
         self.compiled_model = load_obj(
-            'sm',
-            "./log/compiled_models/model%s/"%self.model_num
+            "sm", "./log/compiled_models/model%s/" % self.model_num
+        )
+        copyfile(
+            "./log/compiled_models/model%s/model.txt" % self.model_num,
+            "%s/model.txt"%self.log_dir
             )
+        self.mass_matrix = None
+        self.stepsize = None
 
     def compile_prior_model(self):
         self.compiled_prior_model = compile_model(
-            model_num=self.model_num,
-            prior = True,
-            log_dir = self.log_dir,
-            save = True
-            )
-
+            model_num=self.model_num, prior=True, log_dir=self.log_dir, save=True
+        )
+        
 
     def compile_model(self):
         self.compiled_model = compile_model(
-            model_num=self.model_num,
-            prior = False,
-            log_dir = self.log_dir,
-            save = True
-            )
+            model_num=self.model_num, prior=False, log_dir=self.log_dir, save=True
+        )
+        self.mass_matrix = None
+        self.stepsize = None
 
 
     def sample_prior_particles(self, data):

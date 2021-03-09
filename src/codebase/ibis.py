@@ -117,7 +117,7 @@ def run_stan_model(
         set_initial_values(initial_values)
 
     control = {
-        "metric": "diag_e",  # diag_e/dense_e
+        "metric": "dense_e",  # diag_e/dense_e
         "adapt_delta": 0.99,
         "max_treedepth": 14,
         "adapt_engaged": adapt_engaged,
