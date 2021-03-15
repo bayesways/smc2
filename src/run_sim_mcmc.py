@@ -3,7 +3,7 @@ from run_mcmc import run_mcmc_from_start
 import argparse
 import numpy as np
 from codebase.file_utils import save_obj, load_obj, make_folder, path_backslash
-from tqdm.notebook import tqdm
+from tqdm import tqdm
 from pdb import set_trace
 
 parser = argparse.ArgumentParser()
