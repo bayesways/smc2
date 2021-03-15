@@ -172,7 +172,7 @@ def run_mcmc(
         stepsize=stepsize,
     )
 
-    if save_inv_metric is not None:
+    if save_inv_metric:
         inv_metric = fit_run.get_inv_metric(as_dict=True)
         save_obj(inv_metric, "inv_metric", log_dir)
 
