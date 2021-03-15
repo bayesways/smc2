@@ -26,25 +26,25 @@ def compile_model(model_num, prior, log_dir, save=True):
     if save:
         if prior:
             save_obj(sm, "sm_prior", log_dir)
+            file = open("%smodel_prior.txt" % model_bank_path, "w")
+            file.write(model_code)
+            file.close()
+            save_obj(sm, "sm_prior", model_bank_path)
             copyfile(
                 "./log/compiled_models/model%s/model_prior.txt" %model_num,
                 "%s/model_prior.txt"%log_dir
                 )
-            save_obj(sm, "sm_prior", model_bank_path)
-            file = open("%smodel_prior.txt" % model_bank_path, "w")
-            file.write(model_code)
-            file.close()
+            
         else:
             save_obj(sm, "sm", log_dir)
-            copyfile(
-                "./log/compiled_models/model%s/model.txt" %model_num,
-                "%s/model.txt"%log_dir
-                )
             save_obj(sm, "sm", model_bank_path)
             file = open("%smodel.txt" % model_bank_path, "w")
             file.write(model_code)
             file.close()
-    
+            copyfile(
+                "./log/compiled_models/model%s/model.txt" %model_num,
+                "%s/model.txt"%log_dir
+                )    
 
     return sm
 
