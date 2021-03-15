@@ -97,12 +97,20 @@ class Particles:
         self.compiled_prior_model = compile_model(
             model_num=self.model_num, prior=True, log_dir=self.log_dir, save=True
         )
+        copyfile(
+            "./log/compiled_models/model%s/model_prior.txt" % self.model_num,
+            "%s/model_prior.txt"%self.log_dir
+            )
         
 
     def compile_model(self):
         self.compiled_model = compile_model(
             model_num=self.model_num, prior=False, log_dir=self.log_dir, save=True
         )
+        copyfile(
+            "./log/compiled_models/model%s/model.txt" % self.model_num,
+            "%s/model.txt"%self.log_dir
+            )
         self.mass_matrix = None
         self.stepsize = None
 
