@@ -58,7 +58,7 @@ def sample_prior_particles(
         warmup=0,
         chains=num_chains,
         algorithm="Fixed_param",
-        n_jobs=1,
+        n_jobs=1
     )
     particles = remove_chain_dim(
         fit_run.extract(permuted=False, pars=param_names), param_names, num_samples
