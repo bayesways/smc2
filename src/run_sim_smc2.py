@@ -33,10 +33,10 @@ else:
     print("\n\nReading from existing directory: %s" % log_dir)
 
 # generate data
-exp_data = Data(name=args.task_handle, model_num=1, size=200, random_seed=2)
+exp_data = Data(name=args.task_handle, model_num=1, size=5, random_seed=2)
 
 exp_data.generate()
 save_obj(exp_data, "data", log_dir)
 model_num = 3
 
-smc2 = run_smc2(exp_data, model_num, 200, 100, args.gen_model, log_dir)
+smc2 = run_smc2(exp_data, model_num, 10, 10, args.gen_model, log_dir)
