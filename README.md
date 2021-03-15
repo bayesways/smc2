@@ -11,7 +11,7 @@ Sequential Monte Carlo Methods for Factor Analysis
 ### On Fabian
 
 Use the environment `pystan-dev`. To update the environment run `conda env update --file env_fabian.yml`.
-The environment should work with the latest anaconda edition. If it doesn't try to explicitly define it
+The environment works with the anaconda3/5.3.0. If it's not loaded by default you need to:
 
 1. Remove `apps/anaconda3/5.0.0`   
 2. Activate `apps/anaconda3/5.3.0` 
@@ -19,7 +19,7 @@ The environment should work with the latest anaconda edition. If it doesn't try 
 
 
     ```
-    module del apps/anaconda3/5.0.0
+    module rm apps/anaconda3/5.0.0
     module add apps/anaconda3/5.3.0
     source activate pystan-dev
     ```
