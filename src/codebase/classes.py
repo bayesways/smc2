@@ -27,52 +27,22 @@ class Particles:
         model_num,
         size,
         param_names,
-        latent_names
+        latent_names,
+        hmc_adapt_nsim,
+        hmc_post_adapt_nsim
         ):
         self.name = name
         self.model_num = model_num
         self.size = size
         self.param_names = param_names
         self.latent_names = latent_names
+        self.hmc_adapt_nsim = hmc_adapt_nsim
+        self.hmc_post_adapt_nsim = hmc_post_adapt_nsim
 
 
     def set_log_dir(self, log_dir):
         self.log_dir = log_dir
 
-
-    # def load_prior_model(self):
-    #     self.compiled_prior_model = load_obj(
-    #         'sm_prior',
-    #         "./log/compiled_models/model%s/"%self.model_num
-    #         )
-
-
-    # def load_model(self):
-    #     self.compiled_model = load_obj(
-    #         'sm',
-    #         "./log/compiled_models/model%s/"%self.model_num
-    #         )
-    #     self.mass_matrix = None
-    #     self.stepsize = None
-
-    # def compile_prior_model(self):
-    #     self.compiled_prior_model = compile_model(
-    #         model_num=self.model_num,
-    #         prior = True,
-    #         log_dir = self.log_dir,
-    #         save = True
-    #         )
-
-
-    # def compile_model(self):
-    #     self.compiled_model = compile_model(
-    #         model_num=self.model_num,
-    #         prior = False,
-    #         log_dir = self.log_dir,
-    #         save = True
-    #         )
-    #     self.mass_matrix = None
-    #     self.stepsize = None
     def load_prior_model(self):
         self.compiled_prior_model = load_obj(
             "sm_prior", "./log/compiled_models/model%s/" % self.model_num
@@ -163,8 +133,8 @@ class Particles:
         fit_run = run_mcmc(
             data = data,
             sm = self.compiled_model,
-            num_samples = 5, #normally 20
-            num_warmup = 50, #normally 1000
+            num_samples = self.hmc_post_adapt_nsim, #normally 20
+            num_warmup = self.hmc_adapt_nsim, #normally 1000
             num_chains = 1, # don't change
             log_dir = self.log_dir,
             initial_values = self.get_particles_at_position_m(m),
@@ -182,7 +152,7 @@ class Particles:
         fit_run = run_mcmc(
             data = data,
             sm = self.compiled_model,
-            num_samples = 5, # normally 20 
+            num_samples = self.hmc_adapt_nsim, # normally 20 
             num_warmup = 0,
             num_chains = 1, # don't change
             log_dir = self.log_dir,
@@ -195,15 +165,11 @@ class Particles:
         for name in self.param_names:
             self.particles[name][m] = last_position[name]
 
-
     def jitter(self, data):
-        if self.model_num != 8:
-            self.jitter_and_save_mcmc_parms(data, 0)
-            for m in range(1, self.size):
-                self.jitter_with_used_mcmc_params(data, m)
-        else:
-            pass
-
+        self.jitter_and_save_mcmc_parms(data, 0)
+        for m in range(1, self.size):
+            self.jitter_with_used_mcmc_params(data, m)
+       
 
     def get_loglikelihood_estimate(self):
         return logsumexp(

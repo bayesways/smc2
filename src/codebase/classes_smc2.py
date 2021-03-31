@@ -24,7 +24,7 @@ import copy
 from pdb import set_trace
 
 
-class ParticlesLVM(Particles):
+class ParticlesSMC2(Particles):
     def __init__(
         self,
         name,
@@ -39,15 +39,15 @@ class ParticlesLVM(Particles):
         hmc_adapt_nsim,
         hmc_post_adapt_nsim,
     ):
-        super().__init__(name, model_num, size, param_names, latent_names)
+        super().__init__(
+            name, model_num, size, param_names, latent_names, hmc_adapt_nsim,
+            hmc_post_adapt_nsim,)
         self.bundle_size = bundle_size
         self.latent_model_num = latent_model_num
         self.particles = np.empty(size, dtype=MCMC)
         self.mcmc_nsim = mcmc_nsim
         self.mcmc_adapt_nsim = mcmc_adapt_nsim
-        self.hmc_adapt_nsim = hmc_adapt_nsim
-        self.hmc_post_adapt_nsim = hmc_post_adapt_nsim
-
+        
     def initialize_counter(self, data):
         self.ess = np.zeros((data["N"], data["N"]))
         self.acceptances = np.zeros((self.size, data["N"]))

@@ -43,14 +43,12 @@ def model_phonebook(model_num):
     names = dict()
     if model_num == 1:
         names['param_names'] = [
-            'sigma_square',
             'alpha',
-            'beta_free',
-            'Phi_cov',
-            'Marg_cov',
             'beta',
+            'zz',
+            'yy'
             ]
-        names['latent_names'] = []
+        names['latent_names'] = ['y', 'z']
     elif model_num == 2:
         names['param_names'] = ['beta', 'alpha']
         names['latent_names'] = ['z', 'y']

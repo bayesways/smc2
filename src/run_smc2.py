@@ -1,4 +1,4 @@
-from codebase.classes_smc2 import ParticlesLVM
+from codebase.classes_smc2 import ParticlesSMC2
 from codebase.ibis import model_phonebook, essl, corrcoef_2D
 from codebase.mcmc_tlk_latent import (
     gen_latent_weights_master
@@ -28,7 +28,7 @@ def run_smc2(
     jitter_corrs = dict()
     for t in range(exp_data.size):
         jitter_corrs[t] = dict()
-    particles = ParticlesLVM(
+    particles = ParticlesSMC2(
         name="ibis_lvm",
         model_num=model_num,
         size=size,

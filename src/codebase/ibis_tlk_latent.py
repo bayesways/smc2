@@ -26,6 +26,25 @@ def initialize_bundles(
     )
     return latent_bundles
 
+def initialize_latentvars(
+    size, 
+    data
+    ):
+    latentvars = dict()
+    latentvars['z'] = np.zeros((
+        size,
+        data['N'],
+        data['K']
+        )
+    )
+    latentvars['y'] = np.zeros((
+        size,
+        data['N'],
+        data['J']
+        )
+    )
+    return latentvars
+
 
 def get_weight(
     data,
