@@ -48,6 +48,7 @@ def run_smclvm(
     log_lklhds = np.empty(exp_data.size)
     degeneracy_limit = 0.5
 
+    particles.set_latentvars_shape(exp_data.get_stan_data())
     particles.sample_prior_particles(exp_data.get_stan_data_at_t2(0))  # sample prior particles
     # particles.initialize_latentvars(exp_data.get_stan_data())
     particles.reset_weights()  # set weights to 0
@@ -55,8 +56,8 @@ def run_smclvm(
 
 
     for t in tqdm(range(exp_data.size)):
-
-        particles.get_theta_incremental_weights(exp_data.get_stan_data_at_t(t))
+        particles.sample_latent_variables(exp_data.get_stan_data_at_t(t), t)
+        particles.get_theta_incremental_weights(exp_data.get_stan_data_at_t(t), t)
         log_lklhds[t] = particles.get_loglikelihood_estimate()
         particles.update_weights()
         
@@ -65,11 +66,11 @@ def run_smclvm(
         ) < exp_data.size:
             particles.add_ess(t)
             particles.resample_particles()
-
-            # particles.gather_latent_variables_up_to_t(
-            #     t+1, 
-            #     exp_data.get_stan_data_upto_t(t+1)
-            # )
+            
+            particles.gather_latent_variables_up_to_t(
+                t+1, 
+                exp_data.get_stan_data_upto_t(t+1)
+            )
             # add corr of param before jitter
             pre_jitter = dict()
             for p in param_names:

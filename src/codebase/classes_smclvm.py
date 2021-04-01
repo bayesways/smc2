@@ -1,22 +1,15 @@
 import numpy as np
 from codebase.ibis import (
-    compile_model,
-    sample_prior_particles,
-    get_resample_index,
     run_mcmc,
-    get_initial_values_dict,
-    exp_and_normalise,
+    get_resample_index
 )
 from scipy.stats import bernoulli
 from scipy.special import expit, logsumexp
-from codebase.classes_mcmc import MCMC
-from run_mcmc import run_mcmc_jitter, run_mcmc_jitter_with_used_params
 from codebase.ibis_tlk_latent import (
-    get_weight_matrix_for_particle,
-    initialize_latentvars,
-    get_bundle_weights,
-    generate_latent_pair,
-    get_weight_matrix_at_datapoint,
+    generate_latent_pair
+)
+from codebase.mcmc_tlk_latent import (
+    generate_latent_variables
 )
 from codebase.classes import Particles
 from codebase.file_utils import save_obj, load_obj, make_folder, path_backslash
@@ -41,31 +34,13 @@ class PariclesSMCLVM(Particles):
             name, model_num, size, param_names, latent_names,
             hmc_adapt_nsim,
             hmc_post_adapt_nsim)
-        self.particles = np.empty(size, dtype=MCMC)
+        self.particles = dict()
+        self.latentvars = dict()
 
     def initialize_counter(self, data):
         self.ess = np.zeros((data["N"], data["N"]))
         self.acceptances = np.zeros((self.size, data["N"]))
         self.counts = np.zeros((self.size, data["N"]))
-
-    def initialize_particles(self):
-        for m in range(self.size):
-            theta_m = MCMC(
-                name=self.name,
-                model_num=self.model_num,
-                param_names=self.param_names,
-                latent_names=self.latent_names
-            )
-            self.particles[m] = theta_m
-            self.particles[m].set_log_dir(self.log_dir)
-            self.particles[m].compiled_model = self.compiled_model
-            self.particles[m].compiled_prior_model = self.compiled_prior_model
-
-    # def initialize_latentvars(self, data):
-    #     latentvars = dict()
-    #     latentvars["z"] = np.empty((self.size, data["N"], data["K"]))
-    #     latentvars["y"] = np.empty((self.size, data["N"], data["J"]))
-    #     self.particles.latentvars = latentvars
 
     def add_ess(self, t):
         self.ess[t, :t+1] += 1
@@ -79,31 +54,12 @@ class PariclesSMCLVM(Particles):
         return self.ess.sum(axis=1)>1
 
     def set_latentvars_shape(self, data): 
-        self.particles['zz'] = np.empty((self.size, data["N"], data["K"]))
-        self.particles['yy'] = np.empty((self.size, data["N"], data["J"]))
 
-        
-    # def extract_particles_in_numpy_array(self, name):
-    #     if name in self.param_names:
-    #         dim = list(self.particles[name].shape)
-    #     elif name in self.latent_names:
-    #         dim = list(self.particles.latentvars[name].shape)
-    #     else:
-    #         exit
-        
-    #     dim.insert(0, self.size)
-    #     dim = tuple(dim)
+        self.particles['zz'] = np.empty((self.size, data["K"]))
+        self.particles['yy'] = np.empty((self.size, data["J"]))
+        self.latentvars['z'] = np.empty((self.size, data["N"], data["K"]))
+        self.latentvars['y'] = np.empty((self.size, data["N"], data["J"]))
 
-    #     extract_array = np.empty(dim)
-    #     if name in self.param_names:
-    #         for m in range(self.size):
-    #             extract_array = self.particles[m].particles[name]
-    #     elif name in self.latent_names:
-    #         for m in range(self.size):
-    #             extract_array[m] = self.particles[m].latent_particles[name]
-    #     else:
-    #         exit
-    #     return extract_array
 
     def check_particles_are_distinct(self):
         for name in self.param_names:
@@ -117,7 +73,18 @@ class PariclesSMCLVM(Particles):
         #     dim  = ext_part.shape
         #     uniq_dim = np.unique(ext_part, axis=0).shape
         #     assert dim == uniq_dim 
-    
+    def sample_latent_variables(self, data, t):
+        for m in range(self.size):
+            latentvar = generate_latent_pair(
+                data['J'],
+                data['K'],
+                self.particles['alpha'][m],
+                self.particles['beta'][m])
+            self.particles['zz'][m] = np.copy(latentvar['z'])
+            self.particles['yy'][m] = np.copy(latentvar['y'])
+            self.latentvars['z'][m,t] = np.copy(latentvar['z'])
+            self.latentvars['y'][m,t] = np.copy(latentvar['y'])
+
     def check_latent_particles_are_distinct(self):
         for name in self.latent_names:
             ext_part = self.extract_particles_in_numpy_array(name)
@@ -130,11 +97,11 @@ class PariclesSMCLVM(Particles):
         for m in range(size):
             weights[m] = bernoulli.logpmf(
                 datapoint,
-                p=expit(yy[m].mean(axis=0))
+                p=expit(yy[m][0])
             ).sum()
         return weights
 
-    def get_theta_incremental_weights(self, data):
+    def get_theta_incremental_weights(self, data, t):
         self.incremental_weights = self.compute_weights_at_point(
             self.particles['yy'],
             self.size,
@@ -184,7 +151,25 @@ class PariclesSMCLVM(Particles):
             self.particles[name][m] = last_position[name]
 
     def jitter(self, data):
-        self.set_latentvars_shape(data)
+        # self.set_latentvars_shape(data)
         self.jitter_and_save_mcmc_parms(data, 0)
         for m in range(1, self.size):
             self.jitter_with_used_mcmc_params(data, m)
+
+    def gather_latent_variables_up_to_t(self, t, data):
+        self.particles["zz"] = (
+            np.copy(self.latentvars['z'][:,:t])
+        )
+        self.particles["yy"] = (
+            np.copy(self.latentvars['y'][:,:t])
+        )
+
+
+    def resample_particles(self):
+        resample_index = get_resample_index(self.weights, self.size)
+        for name in self.param_names:
+            particle_samples = np.copy(self.particles[name][resample_index])
+            self.particles[name] = particle_samples
+        for name in self.latent_names:
+            latentvar_samples = np.copy(self.latentvars[name][resample_index])
+            self.latentvars[name] = latentvar_samples
