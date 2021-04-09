@@ -6,7 +6,8 @@ from codebase.ibis import (
 from scipy.stats import bernoulli
 from scipy.special import expit, logsumexp
 from codebase.ibis_tlk_latent import (
-    generate_latent_pair
+    generate_latent_pair,
+    generate_latent_pair_laplace
 )
 from codebase.mcmc_tlk_latent import (
     generate_latent_variables
@@ -73,6 +74,8 @@ class PariclesSMCLVM(Particles):
         #     dim  = ext_part.shape
         #     uniq_dim = np.unique(ext_part, axis=0).shape
         #     assert dim == uniq_dim 
+
+
     def sample_latent_variables(self, data, t):
         for m in range(self.size):
             latentvar = generate_latent_pair(
@@ -80,6 +83,10 @@ class PariclesSMCLVM(Particles):
                 data['K'],
                 self.particles['alpha'][m],
                 self.particles['beta'][m])
+            # latentvar = generate_latent_pair_laplace(
+            #     data['D'],
+            #     self.particles['alpha'][m],
+            #     self.particles['beta'][m])
             self.particles['zz'][m] = np.copy(latentvar['z'])
             self.particles['yy'][m] = np.copy(latentvar['y'])
             self.latentvars['z'][m,t] = np.copy(latentvar['z'])
@@ -109,9 +116,9 @@ class PariclesSMCLVM(Particles):
             )
 
     def jitter_and_save_mcmc_parms(self, data, m=0):
-        initial_values = dict()
-        initial_values['beta'] = self.get_particles_at_position_m(m)['beta']
-        initial_values['alpha'] = self.get_particles_at_position_m(m)['alpha']
+        # initial_values = dict()
+        # initial_values['beta'] = self.get_particles_at_position_m(m)['beta']
+        # initial_values['alpha'] = self.get_particles_at_position_m(m)['alpha']
         fit_run = run_mcmc(
             data = data,
             sm = self.compiled_model,
@@ -119,7 +126,8 @@ class PariclesSMCLVM(Particles):
             num_warmup = self.hmc_adapt_nsim, #normally 1000
             num_chains = 1, # don't change
             log_dir = self.log_dir,
-            initial_values = initial_values,
+            # initial_values = initial_values,
+            initial_values = self.get_particles_at_position_m(m),
             load_inv_metric= False, 
             adapt_engaged = True
             )
@@ -131,9 +139,9 @@ class PariclesSMCLVM(Particles):
 
 
     def jitter_with_used_mcmc_params(self, data, m):
-        initial_values = dict()
-        initial_values['beta'] = self.get_particles_at_position_m(m)['beta']
-        initial_values['alpha'] = self.get_particles_at_position_m(m)['alpha']
+        # initial_values = dict()
+        # initial_values['beta'] = self.get_particles_at_position_m(m)['beta']
+        # initial_values['alpha'] = self.get_particles_at_position_m(m)['alpha']
         fit_run = run_mcmc(
             data = data,
             sm = self.compiled_model,
@@ -141,7 +149,8 @@ class PariclesSMCLVM(Particles):
             num_warmup = 0,
             num_chains = 1, # don't change
             log_dir = self.log_dir,
-            initial_values = initial_values,
+            # initial_values = initial_values,
+            initial_values = self.get_particles_at_position_m(m),
             inv_metric= self.mass_matrix,
             adapt_engaged=False,
             stepsize = self.stepsize
