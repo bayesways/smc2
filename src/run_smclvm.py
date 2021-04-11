@@ -67,17 +67,17 @@ def run_smclvm(
             particles.add_ess(t)
             particles.resample_particles()
             
-            particles.gather_latent_variables_up_to_t(
-                t+1, 
-                exp_data.get_stan_data_upto_t(t+1)
-            )
+            # particles.gather_latent_variables_up_to_t(
+            #     t+1, 
+            #     exp_data.get_stan_data_upto_t(t+1)
+            # )
             # add corr of param before jitter
             pre_jitter = dict()
             for p in param_names:
                 if p not in ['zz', 'yy']:
                     pre_jitter[p] = particles.particles[p]
             ###
-            particles.jitter(exp_data.get_stan_data_upto_t(t + 1))
+            particles.jitter(exp_data.get_stan_data_upto_t(t + 1), t+1)
 
             # add corr of param
             for p in param_names:

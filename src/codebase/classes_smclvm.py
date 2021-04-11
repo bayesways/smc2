@@ -3,11 +3,12 @@ from codebase.ibis import (
     run_mcmc,
     get_resample_index
 )
-from scipy.stats import bernoulli
+from scipy.stats import bernoulli, norm
 from scipy.special import expit, logsumexp
 from codebase.ibis_tlk_latent import (
     generate_latent_pair,
-    generate_latent_pair_laplace
+    generate_latent_pair_laplace,
+    get_laplace_approx
 )
 from codebase.mcmc_tlk_latent import (
     generate_latent_variables
@@ -61,6 +62,14 @@ class PariclesSMCLVM(Particles):
         self.latentvars['z'] = np.empty((self.size, data["N"], data["K"]))
         self.latentvars['y'] = np.empty((self.size, data["N"], data["J"]))
 
+    def get_particles_at_position_m(self, m):
+        values_dict = dict()
+        for name in self.param_names:
+            values_dict[name] = self.particles[name][m]
+        for name in self.latent_names:
+            values_dict[name] = self.latentvars[name][m]
+        return values_dict
+
 
     def check_particles_are_distinct(self):
         for name in self.param_names:
@@ -76,7 +85,7 @@ class PariclesSMCLVM(Particles):
         #     assert dim == uniq_dim 
 
 
-    def sample_latent_variables(self, data, t):
+    def sample_latent_variables(self, data, t): 
         for m in range(self.size):
             latentvar = generate_latent_pair(
                 data['J'],
@@ -87,10 +96,14 @@ class PariclesSMCLVM(Particles):
             #     data['D'],
             #     self.particles['alpha'][m],
             #     self.particles['beta'][m])
+            if t>2:
+                set_trace()
             self.particles['zz'][m] = np.copy(latentvar['z'])
             self.particles['yy'][m] = np.copy(latentvar['y'])
             self.latentvars['z'][m,t] = np.copy(latentvar['z'])
             self.latentvars['y'][m,t] = np.copy(latentvar['y'])
+            if t>2:
+                set_trace()
 
     def check_latent_particles_are_distinct(self):
         for name in self.latent_names:
@@ -108,17 +121,45 @@ class PariclesSMCLVM(Particles):
             ).sum()
         return weights
 
+    def compute_weights_at_point_laplace(self, zz, yy, alpha, beta, size, datapoint):
+        weights = np.empty(size)
+        for m in range(size):
+            w1 = bernoulli.logpmf(
+                datapoint,
+                p=expit(yy[m][0])
+            ).sum()
+            laplace = get_laplace_approx(
+                datapoint,
+                {'alpha':alpha[m],
+                'beta':beta[m]}
+                )
+            
+            adjusted_w = norm.logpdf(zz[m][0]) - laplace.logpdf(zz[m][0])
+            weights[m] = w1+adjusted_w
+        return weights
+
     def get_theta_incremental_weights(self, data, t):
         self.incremental_weights = self.compute_weights_at_point(
             self.particles['yy'],
             self.size,
             data['D']
             )
+        # self.incremental_weights = self.compute_weights_at_point_laplace(
+        #     self.particles['zz'],
+        #     self.particles['yy'],
+        #     self.particles['alpha'],
+        #     self.particles['beta'],
+        #     self.size,
+        #     data['D']
+        #     )
 
-    def jitter_and_save_mcmc_parms(self, data, m=0):
-        # initial_values = dict()
-        # initial_values['beta'] = self.get_particles_at_position_m(m)['beta']
-        # initial_values['alpha'] = self.get_particles_at_position_m(m)['alpha']
+
+    def jitter_and_save_mcmc_parms(self, data, t, m=0):
+        initial_values = dict()
+        initial_values['beta'] = self.get_particles_at_position_m(m)['beta'].copy()
+        initial_values['alpha'] = self.get_particles_at_position_m(m)['alpha'].copy()
+        initial_values['zz'] = self.get_particles_at_position_m(m)['z'][:t].copy()
+        initial_values['yy'] = self.get_particles_at_position_m(m)['y'][:t].copy()
         fit_run = run_mcmc(
             data = data,
             sm = self.compiled_model,
@@ -126,44 +167,57 @@ class PariclesSMCLVM(Particles):
             num_warmup = self.hmc_adapt_nsim, #normally 1000
             num_chains = 1, # don't change
             log_dir = self.log_dir,
-            # initial_values = initial_values,
-            initial_values = self.get_particles_at_position_m(m),
+            initial_values = initial_values,
+            # initial_values = self.get_particles_at_position_m(m),
             load_inv_metric= False, 
             adapt_engaged = True
             )
         self.mass_matrix = fit_run.get_inv_metric(as_dict=True)
         self.stepsize = fit_run.get_stepsize()
         last_position = fit_run.get_last_position()[0] # select chain 1
-        for name in self.param_names:
-            self.particles[name][m] = last_position[name]
+        # for name in self.param_names:
+        #     self.particles[name][m] = last_position[name]
+        self.particles['alpha'][m] = last_position['alpha']
+        self.particles['beta'][m] = last_position['beta']
+        self.latentvars['z'][m] = last_position['zz']
+        self.latentvars['y'][m] = last_position['yy']
 
 
-    def jitter_with_used_mcmc_params(self, data, m):
-        # initial_values = dict()
-        # initial_values['beta'] = self.get_particles_at_position_m(m)['beta']
-        # initial_values['alpha'] = self.get_particles_at_position_m(m)['alpha']
+    def jitter_with_used_mcmc_params(self, data, t, m):
+        initial_values = dict()
+        initial_values['beta'] = self.get_particles_at_position_m(m)['beta'].copy()
+        initial_values['alpha'] = self.get_particles_at_position_m(m)['alpha'].copy()
+        initial_values['zz'] = self.get_particles_at_position_m(m)['z'][:t].copy()
+        initial_values['yy'] = self.get_particles_at_position_m(m)['y'][:t].copy()
         fit_run = run_mcmc(
             data = data,
             sm = self.compiled_model,
-            num_samples = self.hmc_adapt_nsim, # normally 20 
+            num_samples = self.hmc_post_adapt_nsim, # normally 20 
             num_warmup = 0,
             num_chains = 1, # don't change
             log_dir = self.log_dir,
-            # initial_values = initial_values,
-            initial_values = self.get_particles_at_position_m(m),
+            initial_values = initial_values,
+            # initial_values = self.get_particles_at_position_m(m),
             inv_metric= self.mass_matrix,
             adapt_engaged=False,
             stepsize = self.stepsize
             )
         last_position = fit_run.get_last_position()[0] # select chain 1
-        for name in self.param_names:
-            self.particles[name][m] = last_position[name]
+        # for name in self.param_names:
+        #     self.particles[name][m] = last_position[name]
+        self.particles['alpha'][m] = last_position['alpha']
+        self.particles['beta'][m] = last_position['beta']
+        self.latentvars['z'][m] = last_position['zz']
+        self.latentvars['y'][m] = last_position['yy']
+        if np.equal(last_position['zz'], initial_values['zz']):
+            set_trace()
 
-    def jitter(self, data):
+    def jitter(self, data, t):
         # self.set_latentvars_shape(data)
-        self.jitter_and_save_mcmc_parms(data, 0)
+        self.jitter_and_save_mcmc_parms(data, t, 0)
         for m in range(1, self.size):
-            self.jitter_with_used_mcmc_params(data, m)
+            self.jitter_with_used_mcmc_params(data, t, m)
+
 
     def gather_latent_variables_up_to_t(self, t, data):
         self.particles["zz"] = (
