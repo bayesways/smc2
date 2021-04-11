@@ -57,8 +57,8 @@ class PariclesSMCLVM(Particles):
         return self.ess.sum(axis=1)>1
 
     def initialize_latentvars(self, data): 
-        self.particles['zt'] = np.empty((self.size, data["K"]))
-        self.particles['yt'] = np.empty((self.size, data["J"]))
+        # self.particles['zt'] = np.empty((self.size, data["K"]))
+        # self.particles['yt'] = np.empty((self.size, data["J"]))
         self.particles['zz'] = np.empty((self.size, data["N"], data["K"]))
         self.particles['yy'] = np.empty((self.size, data["N"], data["J"]))
 
@@ -83,19 +83,18 @@ class PariclesSMCLVM(Particles):
 
     def sample_latent_variables(self, data, t): 
         for m in range(self.size):
-            latentvar = generate_latent_pair(
-                data['J'],
-                data['K'],
-                self.particles['alpha'][m],
-                self.particles['beta'][m])
+            # latentvar = generate_latent_pair(
+            #     data['J'],
+            #     data['K'],
+            #     self.particles['alpha'][m],
+            #     self.particles['beta'][m])
             latentvar = generate_latent_pair_laplace(
                 data['D'],
                 self.particles['alpha'][m],
                 self.particles['beta'][m])
+
             self.particles['zz'][m,t] = latentvar['z'].copy()
             self.particles['yy'][m,t] = latentvar['y'].copy()
-            self.particles['zt'][m] = latentvar['z'].copy()
-            self.particles['yt'][m] = latentvar['y'].copy()
 
     def check_latent_particles_are_distinct(self):
         for name in self.latent_names:
@@ -109,7 +108,7 @@ class PariclesSMCLVM(Particles):
         for m in range(size):
             weights[m] = bernoulli.logpmf(
                 datapoint,
-                p=expit(yy[m][0])
+                p=expit(yy[m])
             ).sum()
         return weights
 
@@ -118,7 +117,7 @@ class PariclesSMCLVM(Particles):
         for m in range(size):
             w1 = bernoulli.logpmf(
                 datapoint,
-                p=expit(yy[m][0])
+                p=expit(yy[m])
             ).sum()
             laplace = get_laplace_approx(
                 datapoint,
@@ -131,27 +130,22 @@ class PariclesSMCLVM(Particles):
         return weights
 
     def get_theta_incremental_weights(self, data, t):
-        self.incremental_weights = self.compute_weights_at_point(
-            self.particles['yy'],
-            self.size,
-            data['D']
-            )
-        # self.incremental_weights = self.compute_weights_at_point_laplace(
-        #     self.particles['zz'],
-        #     self.particles['yy'],
-        #     self.particles['alpha'],
-        #     self.particles['beta'],
+        # self.incremental_weights = self.compute_weights_at_point(
+        #     self.particles['yy'][:,t],
         #     self.size,
         #     data['D']
         #     )
+        self.incremental_weights = self.compute_weights_at_point_laplace(
+            self.particles['zz'][:,t],
+            self.particles['yy'][:,t],
+            self.particles['alpha'],
+            self.particles['beta'],
+            self.size,
+            data['D']
+            )
 
 
     def jitter_and_save_mcmc_parms(self, data, t, m=0):
-        # initial_values = dict()
-        # initial_values['beta'] = self.get_particles_at_position_m(m)['beta'].copy()
-        # initial_values['alpha'] = self.get_particles_at_position_m(m)['alpha'].copy()
-        # initial_values['z'] = self.get_particles_at_position_m(m)['zz'][:t].copy()
-        # initial_values['y'] = self.get_particles_at_position_m(m)['yy'][:t].copy()
         fit_run = run_mcmc(
             data = data,
             sm = self.compiled_model,
@@ -172,11 +166,6 @@ class PariclesSMCLVM(Particles):
 
 
     def jitter_with_used_mcmc_params(self, data, t, m):
-        # initial_values = dict()
-        # initial_values['beta'] = self.get_particles_at_position_m(m)['beta'].copy()
-        # initial_values['alpha'] = self.get_particles_at_position_m(m)['alpha'].copy()
-        # initial_values['z'] = self.get_particles_at_position_m(m)['zz'][:t].copy()
-        # initial_values['y'] = self.get_particles_at_position_m(m)['yy'][:t].copy()
         fit_run = run_mcmc(
             data = data,
             sm = self.compiled_model,

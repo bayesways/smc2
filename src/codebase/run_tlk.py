@@ -44,9 +44,7 @@ def model_phonebook(model_num):
     if model_num == 1:
         names['param_names'] = [
             'alpha',
-            'beta',
-            'zt',
-            'yt'
+            'beta'
             ]
         names['stan_names'] = [
             'alpha',

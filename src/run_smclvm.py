@@ -50,7 +50,10 @@ def run_smclvm(
     log_lklhds = np.empty(exp_data.size)
     degeneracy_limit = 0.5
 
-    particles.sample_prior_particles(exp_data.get_stan_data_at_t2(0))  # sample prior particles
+    particles.sample_prior_particles(
+        exp_data.get_stan_data_at_t2(0),
+        particles.param_names
+        )  # sample prior particles
     particles.initialize_latentvars(exp_data.get_stan_data())
     particles.reset_weights()  # set weights to 0
     particles.initialize_counter(exp_data.get_stan_data())
@@ -76,10 +79,15 @@ def run_smclvm(
             pre_jitter = dict()
             for p in param_names:
                 if p not in ['zz', 'yy']:
-                    pre_jitter[p] = particles.particles[p]
+                    pre_jitter[p] = particles.particles[p].copy()
             ###
             particles.jitter(exp_data.get_stan_data_upto_t(t + 1), t+1)
 
+
+            particles.gather_variables_postjitter(
+                t+1, 
+                exp_data.get_stan_data_upto_t(t+1)
+            )          
             # add corr of param
             for p in param_names:
                 if p not in ['zz', 'yy']:
@@ -87,11 +95,6 @@ def run_smclvm(
                         pre_jitter[p], particles.particles[p]
                     )
             ###
-
-            particles.gather_variables_postjitter(
-                t+1, 
-                exp_data.get_stan_data_upto_t(t+1)
-            )            
             particles.check_particles_are_distinct()
 
             particles.reset_weights()

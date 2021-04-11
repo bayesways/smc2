@@ -87,15 +87,18 @@ class Particles:
         self.stepsize = None
 
 
-    def sample_prior_particles(self, data):
+    def sample_prior_particles(self, data, names = None):
+        if names is None:
+            names = self.param_names
         self.particles = sample_prior_particles(
-            data = data,
-            sm_prior = self.compiled_prior_model,
-            param_names = self.stan_names,
-            num_samples = self.size, 
-            num_chains = 1, 
-            log_dir = self.log_dir
-            )
+                data = data,
+                sm_prior = self.compiled_prior_model,
+                param_names = names,
+                num_samples = self.size, 
+                num_chains = 1, 
+                log_dir = self.log_dir
+                )
+        
 
 
     def reset_weights(self):
