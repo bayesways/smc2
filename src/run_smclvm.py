@@ -24,6 +24,7 @@ def run_smclvm(
 
     param_names = model_phonebook(model_num)["param_names"]
     latent_names = model_phonebook(model_num)["latent_names"]
+    stan_names = model_phonebook(model_num)["stan_names"]
     jitter_corrs = dict()
     for t in range(exp_data.size):
         jitter_corrs[t] = dict()
@@ -32,6 +33,7 @@ def run_smclvm(
         model_num=model_num,
         size=size,
         param_names=param_names,
+        stan_names = stan_names,
         latent_names=latent_names,
         latent_model_num=1,
         hmc_adapt_nsim = 200,
@@ -48,29 +50,28 @@ def run_smclvm(
     log_lklhds = np.empty(exp_data.size)
     degeneracy_limit = 0.5
 
-    particles.set_latentvars_shape(exp_data.get_stan_data())
     particles.sample_prior_particles(exp_data.get_stan_data_at_t2(0))  # sample prior particles
-    # particles.initialize_latentvars(exp_data.get_stan_data())
+    particles.initialize_latentvars(exp_data.get_stan_data())
     particles.reset_weights()  # set weights to 0
     particles.initialize_counter(exp_data.get_stan_data())
-
 
     for t in tqdm(range(exp_data.size)):
         particles.sample_latent_variables(exp_data.get_stan_data_at_t(t), t)
         particles.get_theta_incremental_weights(exp_data.get_stan_data_at_t(t), t)
         log_lklhds[t] = particles.get_loglikelihood_estimate()
         particles.update_weights()
+
         
         if (essl(particles.weights) < degeneracy_limit * particles.size) and (
             t + 1
         ) < exp_data.size:
             particles.add_ess(t)
             particles.resample_particles()
-            
-            # particles.gather_latent_variables_up_to_t(
-            #     t+1, 
-            #     exp_data.get_stan_data_upto_t(t+1)
-            # )
+            particles.gather_variables_prejitter(
+                t+1, 
+                exp_data.get_stan_data_upto_t(t+1)
+            )
+
             # add corr of param before jitter
             pre_jitter = dict()
             for p in param_names:
@@ -86,7 +87,11 @@ def run_smclvm(
                         pre_jitter[p], particles.particles[p]
                     )
             ###
-            
+
+            particles.gather_variables_postjitter(
+                t+1, 
+                exp_data.get_stan_data_upto_t(t+1)
+            )            
             particles.check_particles_are_distinct()
 
             particles.reset_weights()

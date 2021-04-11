@@ -27,6 +27,7 @@ class Particles:
         model_num,
         size,
         param_names,
+        stan_names,
         latent_names,
         hmc_adapt_nsim,
         hmc_post_adapt_nsim
@@ -35,6 +36,7 @@ class Particles:
         self.model_num = model_num
         self.size = size
         self.param_names = param_names
+        self.stan_names = stan_names
         self.latent_names = latent_names
         self.hmc_adapt_nsim = hmc_adapt_nsim
         self.hmc_post_adapt_nsim = hmc_post_adapt_nsim
@@ -89,7 +91,7 @@ class Particles:
         self.particles = sample_prior_particles(
             data = data,
             sm_prior = self.compiled_prior_model,
-            param_names = self.param_names,
+            param_names = self.stan_names,
             num_samples = self.size, 
             num_chains = 1, 
             log_dir = self.log_dir

@@ -13,8 +13,8 @@ transformed data{
 generated quantities{
   vector[J] alpha;
   matrix[J,K] beta;
-  matrix[N,K] zz;
-  matrix[N,J] yy;
+  matrix[N,K] z;
+  matrix[N,J] y;
 
   for (j in 1:J) alpha[j] = normal_rng(0,10);
   for (j in 1:J){
@@ -24,9 +24,9 @@ generated quantities{
   {
     for (k in 1:K)
     {
-      zz[n,k] = normal_rng(0,1);
+      z[n,k] = normal_rng(0,1);
     }
   }
-  for (n in 1:N) yy[n,] = to_row_vector(alpha) + zz[n,] * beta';
+  for (n in 1:N) y[n,] = to_row_vector(alpha) + z[n,] * beta';
 
 }

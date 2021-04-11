@@ -27,13 +27,14 @@ class PariclesSMCLVM(Particles):
         model_num,
         size,
         param_names,
+        stan_names,
         latent_names,
         latent_model_num,
         hmc_adapt_nsim,
         hmc_post_adapt_nsim,
     ):
         super().__init__(
-            name, model_num, size, param_names, latent_names,
+            name, model_num, size, param_names, stan_names, latent_names,
             hmc_adapt_nsim,
             hmc_post_adapt_nsim)
         self.particles = dict()
@@ -55,34 +56,29 @@ class PariclesSMCLVM(Particles):
     def get_threshold_ess_indicator(self):
         return self.ess.sum(axis=1)>1
 
-    def set_latentvars_shape(self, data): 
+    def initialize_latentvars(self, data): 
+        self.particles['zt'] = np.empty((self.size, data["K"]))
+        self.particles['yt'] = np.empty((self.size, data["J"]))
+        self.particles['zz'] = np.empty((self.size, data["N"], data["K"]))
+        self.particles['yy'] = np.empty((self.size, data["N"], data["J"]))
 
-        self.particles['zz'] = np.empty((self.size, data["K"]))
-        self.particles['yy'] = np.empty((self.size, data["J"]))
-        self.latentvars['z'] = np.empty((self.size, data["N"], data["K"]))
-        self.latentvars['y'] = np.empty((self.size, data["N"], data["J"]))
-
-    def get_particles_at_position_m(self, m):
+    def get_particles_at_position_m(self, names, m):
         values_dict = dict()
-        for name in self.param_names:
-            values_dict[name] = self.particles[name][m]
-        for name in self.latent_names:
-            values_dict[name] = self.latentvars[name][m]
+        if names is not None:
+            for name in self.param_names:
+                values_dict[name] = self.particles[name][m]
+        else:
+            for name in names:
+                values_dict[name] = self.particles[name][m]
         return values_dict
 
 
     def check_particles_are_distinct(self):
-        for name in self.param_names:
+        for name in ['alpha', 'beta', 'zz', 'yy']:
             ext_part = self.particles[name]
             dim  = ext_part.shape
             uniq_dim = np.unique(ext_part, axis=0).shape
             assert dim == uniq_dim
-        # for name in self.latent_names:
-        #     set_trace()
-        #     ext_part = self.particles.latentvars[name]
-        #     dim  = ext_part.shape
-        #     uniq_dim = np.unique(ext_part, axis=0).shape
-        #     assert dim == uniq_dim 
 
 
     def sample_latent_variables(self, data, t): 
@@ -92,18 +88,14 @@ class PariclesSMCLVM(Particles):
                 data['K'],
                 self.particles['alpha'][m],
                 self.particles['beta'][m])
-            # latentvar = generate_latent_pair_laplace(
-            #     data['D'],
-            #     self.particles['alpha'][m],
-            #     self.particles['beta'][m])
-            if t>2:
-                set_trace()
-            self.particles['zz'][m] = np.copy(latentvar['z'])
-            self.particles['yy'][m] = np.copy(latentvar['y'])
-            self.latentvars['z'][m,t] = np.copy(latentvar['z'])
-            self.latentvars['y'][m,t] = np.copy(latentvar['y'])
-            if t>2:
-                set_trace()
+            latentvar = generate_latent_pair_laplace(
+                data['D'],
+                self.particles['alpha'][m],
+                self.particles['beta'][m])
+            self.particles['zz'][m,t] = latentvar['z'].copy()
+            self.particles['yy'][m,t] = latentvar['y'].copy()
+            self.particles['zt'][m] = latentvar['z'].copy()
+            self.particles['yt'][m] = latentvar['y'].copy()
 
     def check_latent_particles_are_distinct(self):
         for name in self.latent_names:
@@ -155,11 +147,11 @@ class PariclesSMCLVM(Particles):
 
 
     def jitter_and_save_mcmc_parms(self, data, t, m=0):
-        initial_values = dict()
-        initial_values['beta'] = self.get_particles_at_position_m(m)['beta'].copy()
-        initial_values['alpha'] = self.get_particles_at_position_m(m)['alpha'].copy()
-        initial_values['zz'] = self.get_particles_at_position_m(m)['z'][:t].copy()
-        initial_values['yy'] = self.get_particles_at_position_m(m)['y'][:t].copy()
+        # initial_values = dict()
+        # initial_values['beta'] = self.get_particles_at_position_m(m)['beta'].copy()
+        # initial_values['alpha'] = self.get_particles_at_position_m(m)['alpha'].copy()
+        # initial_values['z'] = self.get_particles_at_position_m(m)['zz'][:t].copy()
+        # initial_values['y'] = self.get_particles_at_position_m(m)['yy'][:t].copy()
         fit_run = run_mcmc(
             data = data,
             sm = self.compiled_model,
@@ -167,28 +159,24 @@ class PariclesSMCLVM(Particles):
             num_warmup = self.hmc_adapt_nsim, #normally 1000
             num_chains = 1, # don't change
             log_dir = self.log_dir,
-            initial_values = initial_values,
-            # initial_values = self.get_particles_at_position_m(m),
+            # initial_values = initial_values,
+            initial_values = self.get_particles_at_position_m(self.stan_names, m),
             load_inv_metric= False, 
             adapt_engaged = True
             )
         self.mass_matrix = fit_run.get_inv_metric(as_dict=True)
         self.stepsize = fit_run.get_stepsize()
         last_position = fit_run.get_last_position()[0] # select chain 1
-        # for name in self.param_names:
-        #     self.particles[name][m] = last_position[name]
-        self.particles['alpha'][m] = last_position['alpha']
-        self.particles['beta'][m] = last_position['beta']
-        self.latentvars['z'][m] = last_position['zz']
-        self.latentvars['y'][m] = last_position['yy']
+        for name in self.stan_names:
+            self.particles[name][m] = last_position[name]
 
 
     def jitter_with_used_mcmc_params(self, data, t, m):
-        initial_values = dict()
-        initial_values['beta'] = self.get_particles_at_position_m(m)['beta'].copy()
-        initial_values['alpha'] = self.get_particles_at_position_m(m)['alpha'].copy()
-        initial_values['zz'] = self.get_particles_at_position_m(m)['z'][:t].copy()
-        initial_values['yy'] = self.get_particles_at_position_m(m)['y'][:t].copy()
+        # initial_values = dict()
+        # initial_values['beta'] = self.get_particles_at_position_m(m)['beta'].copy()
+        # initial_values['alpha'] = self.get_particles_at_position_m(m)['alpha'].copy()
+        # initial_values['z'] = self.get_particles_at_position_m(m)['zz'][:t].copy()
+        # initial_values['y'] = self.get_particles_at_position_m(m)['yy'][:t].copy()
         fit_run = run_mcmc(
             data = data,
             sm = self.compiled_model,
@@ -196,43 +184,34 @@ class PariclesSMCLVM(Particles):
             num_warmup = 0,
             num_chains = 1, # don't change
             log_dir = self.log_dir,
-            initial_values = initial_values,
-            # initial_values = self.get_particles_at_position_m(m),
+            # initial_values = initial_values,
+            initial_values = self.get_particles_at_position_m(self.stan_names, m),
             inv_metric= self.mass_matrix,
             adapt_engaged=False,
             stepsize = self.stepsize
             )
         last_position = fit_run.get_last_position()[0] # select chain 1
-        # for name in self.param_names:
-        #     self.particles[name][m] = last_position[name]
-        self.particles['alpha'][m] = last_position['alpha']
-        self.particles['beta'][m] = last_position['beta']
-        self.latentvars['z'][m] = last_position['zz']
-        self.latentvars['y'][m] = last_position['yy']
-        if np.equal(last_position['zz'], initial_values['zz']):
-            set_trace()
+        for name in self.stan_names:
+            self.particles[name][m] = last_position[name]
 
     def jitter(self, data, t):
-        # self.set_latentvars_shape(data)
         self.jitter_and_save_mcmc_parms(data, t, 0)
         for m in range(1, self.size):
             self.jitter_with_used_mcmc_params(data, t, m)
 
 
-    def gather_latent_variables_up_to_t(self, t, data):
-        self.particles["zz"] = (
-            np.copy(self.latentvars['z'][:,:t])
-        )
-        self.particles["yy"] = (
-            np.copy(self.latentvars['y'][:,:t])
-        )
+    def gather_variables_prejitter(self, t, data):
+        self.particles["z"] = self.particles['zz'][:,:t].copy()
+        self.particles["y"] = self.particles['yy'][:,:t].copy()
+
+
+    def gather_variables_postjitter(self, t, data):
+        self.particles['zz'][:,:t] = self.particles["z"].copy()
+        self.particles['yy'][:,:t] = self.particles["y"].copy()
 
 
     def resample_particles(self):
         resample_index = get_resample_index(self.weights, self.size)
-        for name in self.param_names:
+        for name in self.param_names+self.latent_names:
             particle_samples = np.copy(self.particles[name][resample_index])
             self.particles[name] = particle_samples
-        for name in self.latent_names:
-            latentvar_samples = np.copy(self.latentvars[name][resample_index])
-            self.latentvars[name] = latentvar_samples
