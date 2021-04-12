@@ -80,18 +80,18 @@ class PariclesSMCLVM(Particles):
 
     def sample_latent_variables(self, data, t):
         for m in range(self.size):
-            latentvar = generate_latent_pair(
-                data["J"],
-                data["K"],
-                self.particles["alpha"][m],
-                self.particles["beta"][m],
-            )
+            # latentvar = generate_latent_pair(
+            #     data["J"],
+            #     data["K"],
+            #     self.particles["alpha"][m],
+            #     self.particles["beta"][m],
+            # )
 
-            ### Laplace
-            # latentvar = generate_latent_pair_laplace(
-            #     data['D'],
-            #     self.particles['alpha'][m],
-            #     self.particles['beta'][m])
+            ## Laplace
+            latentvar = generate_latent_pair_laplace(
+                data['D'],
+                self.particles['alpha'][m],
+                self.particles['beta'][m])
 
             self.particles["zz"][m, t] = latentvar["z"].copy()
             self.particles["yy"][m, t] = latentvar["y"].copy()
@@ -107,25 +107,26 @@ class PariclesSMCLVM(Particles):
         for m in range(size):
             w1 = bernoulli.logpmf(datapoint, p=expit(yy[m])).sum()
             laplace = get_laplace_approx(
-                datapoint, {"alpha": alpha[m], "beta": beta[m]}
+                datapoint, {"alpha": alpha[m], "beta": beta[m]},
+                fisher=False
             )
             adjusted_w = norm.logpdf(zz[m][0]) - laplace.logpdf(zz[m][0])
             weights[m] = w1 + adjusted_w
         return weights
 
     def get_theta_incremental_weights(self, data, t):
-        self.incremental_weights = self.compute_weights_at_point(
-            self.particles["yy"][:, t], self.size, data["D"]
-        )
-        ### Laplace
-        # self.incremental_weights = self.compute_weights_at_point_laplace(
-        #     self.particles['zz'][:,t],
-        #     self.particles['yy'][:,t],
-        #     self.particles['alpha'],
-        #     self.particles['beta'],
-        #     self.size,
-        #     data['D']
-        #     )
+        # self.incremental_weights = self.compute_weights_at_point(
+        #     self.particles["yy"][:, t], self.size, data["D"]
+        # )
+        ## Laplace
+        self.incremental_weights = self.compute_weights_at_point_laplace(
+            self.particles['zz'][:,t],
+            self.particles['yy'][:,t],
+            self.particles['alpha'],
+            self.particles['beta'],
+            self.size,
+            data['D']
+            )
 
     def jitter_and_save_mcmc_parms(self, data, t, m=0):
         fit_run = run_mcmc(

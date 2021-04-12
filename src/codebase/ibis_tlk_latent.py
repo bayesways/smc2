@@ -117,7 +117,9 @@ def generate_latent_pair_laplace(
         {
             'alpha':alpha,
             'beta':beta,
-        })
+        },
+        fisher=False
+        )
     pair = dict()
     zz = lapldist.rvs(size = 1).reshape((1,))
     yy = alpha + zz @ beta.T
@@ -154,7 +156,29 @@ def get_fisher_information(z, y, theta):
     r2 =pi_z*(1.-pi_z)
     return 1. + np.sum(r1/r2)
 
-def get_laplace_approx(y, theta):
-    res = minimize(get_neg_posterior, np.array([[0]]), args=(y, theta), method='BFGS')
-    fisher_info_matrix = get_fisher_information(res.x, y, theta)
-    return multivariate_normal(mean = res.x, cov = fisher_info_matrix**(-1))
+def get_grad2_pi_z(z, theta):
+    exp_eta = np.exp(theta['alpha'] +  z @ theta['beta'].T)
+    return (-exp_eta *  (theta['beta'].T**2))/(1+exp_eta)**2
+
+def get_grad2_log_likelihood(z,y,theta):
+    pi_z = get_pi_z(z, theta)
+    grad_pi_z = get_grad2_pi_z(z, theta)
+    grad2_pi_z = get_grad2_pi_z(z, theta)
+    
+    r1 = (y/pi_z) - ((1. - y)/(1-pi_z))
+    r2 = (y/pi_z**2) + ((1. - y)/(1-pi_z)**2)
+    
+    s1 = (grad2_pi_z*r1).sum() 
+    s2 = (grad_pi_z**2*(r2)).sum() 
+    return -1 + s1 - s2
+
+def get_hessian(z, y, theta):
+    return -get_grad2_log_likelihood(z, y, theta)
+
+def get_laplace_approx(y, theta, fisher=True):
+    res = minimize(get_neg_posterior, np.array([[1]]), args=(y, theta), method='BFGS')
+    if fisher:
+        cov_matrix = get_fisher_information(res.x, y, theta)
+    else:
+        cov_matrix = get_hessian(res.x, y, theta)
+    return multivariate_normal(mean = res.x, cov = cov_matrix**(-1))
