@@ -1,8 +1,6 @@
 from codebase.classes_smclvm import PariclesSMCLVM
 from codebase.ibis import model_phonebook, essl, corrcoef_2D
-from codebase.mcmc_tlk_latent import (
-    gen_latent_weights_master
-)
+from codebase.mcmc_tlk_latent import gen_latent_weights_master
 import numpy as np
 from tqdm import tqdm
 from codebase.file_utils import (
@@ -11,6 +9,7 @@ from codebase.file_utils import (
 )
 from scipy.special import logsumexp
 from pdb import set_trace
+
 
 def run_smclvm(
     exp_data,
@@ -33,11 +32,11 @@ def run_smclvm(
         model_num=model_num,
         size=size,
         param_names=param_names,
-        stan_names = stan_names,
+        stan_names=stan_names,
         latent_names=latent_names,
         latent_model_num=1,
-        hmc_adapt_nsim = 200,
-        hmc_post_adapt_nsim = 5,
+        hmc_adapt_nsim=200,
+        hmc_post_adapt_nsim=5,
     )
     particles.set_log_dir(log_dir)
     if gen_model:
@@ -51,9 +50,8 @@ def run_smclvm(
     degeneracy_limit = 0.5
 
     particles.sample_prior_particles(
-        exp_data.get_stan_data_at_t2(0),
-        particles.param_names
-        )  # sample prior particles
+        exp_data.get_stan_data_at_t2(0), particles.param_names
+    )  # sample prior particles
     particles.initialize_latentvars(exp_data.get_stan_data())
     particles.reset_weights()  # set weights to 0
     particles.initialize_counter(exp_data.get_stan_data())
@@ -64,39 +62,34 @@ def run_smclvm(
         log_lklhds[t] = particles.get_loglikelihood_estimate()
         particles.update_weights()
 
-        
         if (essl(particles.weights) < degeneracy_limit * particles.size) and (
             t + 1
         ) < exp_data.size:
             particles.add_ess(t)
             particles.resample_particles()
             particles.gather_variables_prejitter(
-                t+1, 
-                exp_data.get_stan_data_upto_t(t+1)
+                t + 1, exp_data.get_stan_data_upto_t(t + 1)
             )
 
             # add corr of param before jitter
             pre_jitter = dict()
             for p in param_names:
-                if p not in ['zz', 'yy']:
+                if p not in ["zz", "yy"]:
                     pre_jitter[p] = particles.particles[p].copy()
             ###
-            particles.jitter(exp_data.get_stan_data_upto_t(t + 1), t+1)
-
+            particles.jitter(exp_data.get_stan_data_upto_t(t + 1), t + 1)
 
             particles.gather_variables_postjitter(
-                t+1, 
-                exp_data.get_stan_data_upto_t(t+1)
-            )          
+                t + 1, exp_data.get_stan_data_upto_t(t + 1)
+            )
             # add corr of param
             for p in param_names:
-                if p not in ['zz', 'yy']:
+                if p not in ["zz", "yy"]:
                     jitter_corrs[t][p] = corrcoef_2D(
                         pre_jitter[p], particles.particles[p]
                     )
             ###
             particles.check_particles_are_distinct()
-
             particles.reset_weights()
         else:
             pass
