@@ -58,7 +58,12 @@ def model_phonebook(model_num):
         names['latent_names'] = ['z', 'y']
     elif model_num == 3:
         names['param_names'] = ['beta', 'alpha']
-        names['latent_names'] = ['z', 'y']
+        names['stan_names'] = [
+            'alpha',
+            'beta',
+            'zz'
+            ]
+        names['latent_names'] = ['y', 'z']
     elif model_num == 4:
         names['param_names'] = ['beta', 'alpha']
         names['latent_names'] = ['z', 'y']

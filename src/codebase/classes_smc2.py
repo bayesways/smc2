@@ -31,6 +31,7 @@ class ParticlesSMC2(Particles):
         model_num,
         size,
         param_names,
+        stan_names,
         latent_names,
         bundle_size,
         latent_model_num,
@@ -40,7 +41,7 @@ class ParticlesSMC2(Particles):
         hmc_post_adapt_nsim,
     ):
         super().__init__(
-            name, model_num, size, param_names, latent_names, hmc_adapt_nsim,
+            name, model_num, size, param_names, stan_names, latent_names, hmc_adapt_nsim,
             hmc_post_adapt_nsim,)
         self.bundle_size = bundle_size
         self.latent_model_num = latent_model_num
@@ -68,12 +69,13 @@ class ParticlesSMC2(Particles):
             self.particles[m].compiled_model = self.compiled_model
             self.particles[m].compiled_prior_model = self.compiled_prior_model
 
+
     def initialize_bundles(self, data):
         for m in range(self.size):
-            bundles = dict()
-            bundles["z"] = np.empty((self.bundle_size, data["N"], data["K"]))
-            bundles["y"] = np.empty((self.bundle_size, data["N"], data["J"]))
-            self.particles[m].bundles = bundles
+            self.particles[m].latent_particles =  dict()
+            self.particles[m].particles['zz'] = np.empty((self.bundle_size, data["N"], data["K"]))
+            self.particles[m].particles['yy'] = np.empty((self.bundle_size, data["N"], data["J"]))
+
 
     def add_ess(self, t):
         self.ess[t, :t+1] += 1
@@ -92,7 +94,10 @@ class ParticlesSMC2(Particles):
         elif name in self.latent_names:
             dim = list(self.particles[0].latent_particles[name].shape)
         else:
-            exit
+            try:
+                dim = list(self.particles[0].particles[name].shape)
+            except:
+                exit
         
         dim.insert(0, self.size)
         dim = tuple(dim)
@@ -105,20 +110,18 @@ class ParticlesSMC2(Particles):
             for m in range(self.size):
                 extract_array[m] = self.particles[m].latent_particles[name]
         else:
-            exit
+            try:
+                dim = list(self.particles[0].particles[name].shape)
+            except:
+                exit
         return extract_array
 
     def check_particles_are_distinct(self):
-        for name in self.param_names:
+        for name in ['alpha', 'beta', 'zz']:
             ext_part = self.extract_particles_in_numpy_array(name)
             dim  = ext_part.shape
             uniq_dim = np.unique(ext_part, axis=0).shape
             assert dim == uniq_dim
-        for name in self.latent_names:
-            ext_part = self.extract_particles_in_numpy_array(name)
-            dim  = ext_part.shape
-            uniq_dim = np.unique(ext_part, axis=0).shape
-            assert dim == uniq_dim 
     
     def check_latent_particles_are_distinct(self):
         for name in self.latent_names:
@@ -135,18 +138,11 @@ class ParticlesSMC2(Particles):
         for m in range(self.size):
             # use sample_latent_variables2 function
             latent_vars = self.particles[m].sample_latent_variables2(data_t)
+            self.particles[m].particles["zz"][:,t] = latent_vars['z'][:,0].copy()
+            self.particles[m].particles["yy"][:,t] = latent_vars["y"][:, 0].copy() 
+            self.particles[m].latent_particles["z"] = latent_vars['z'].copy()
+            self.particles[m].latent_particles["y"] = latent_vars['y'].copy()
 
-            # so we need to initialize particles if we do it this way 
-            latent_particles = dict()
-            latent_particles['z'] = np.empty((self.bundle_size, 1, 1))
-            latent_particles['y'] = np.empty((self.bundle_size, 1, 6))
-            self.particles[m].latent_particles = latent_particles
-            
-            self.particles[m].latent_particles["z"] = latent_vars['z']
-            self.particles[m].latent_particles["y"] = latent_vars['y']
-
-            self.particles[m].bundles["z"][:,t] = latent_vars['z'][:,0]
-            self.particles[m].bundles["y"][:,t] = latent_vars["y"][:, 0] 
 
     def get_theta_incremental_weights_at_t(self, data):
         weights = np.empty(self.size)
@@ -199,8 +195,8 @@ class ParticlesSMC2(Particles):
             )
         self.particles[0].acceptance = jitter_particles.acceptance.copy()
         self.particles[0].particles = jitter_particles.particles.copy()
-        self.particles[0].bundles['z'][:,:t] = np.copy(jitter_particles.latent_particles["z"])
-        self.particles[0].bundles['y'][:,:t] = np.copy(jitter_particles.latent_particles["y"])
+        self.particles[0].particles['zz'][:,:t] = jitter_particles.latent_particles["z"].copy()
+        self.particles[0].particles['yy'][:,:t] = jitter_particles.latent_particles["y"].copy()
         self.mass_matrix = jitter_particles.mass_matrix.copy()
         self.stepsize = jitter_particles.stepsize.copy()
         for m in range(1, self.size):
@@ -212,8 +208,8 @@ class ParticlesSMC2(Particles):
                 )
             self.particles[m].acceptance = jitter_particles.acceptance.copy()
             self.particles[m].particles = jitter_particles.particles.copy()
-            self.particles[m].bundles['z'][:,:t] = np.copy(jitter_particles.latent_particles["z"])
-            self.particles[m].bundles['y'][:,:t] = np.copy(jitter_particles.latent_particles["y"])
+            self.particles[m].particles['zz'][:,:t] = jitter_particles.latent_particles["z"].copy()
+            self.particles[m].particles['yy'][:,:t] = jitter_particles.latent_particles["y"].copy()
         # for m in range(self.size):
         #     self.particles[m].sample_theta_given_z_and_save_mcmc_parms2(data)
         # self.particles[0].sample_theta_given_z_and_save_mcmc_parms2(data)
@@ -230,10 +226,10 @@ class ParticlesSMC2(Particles):
     def gather_latent_variables_up_to_t(self, t, data):
         for m in range(self.size):
             self.particles[m].latent_particles["z"] = (
-                np.copy(self.particles[m].bundles['z'][:,:t])
+                np.copy(self.particles[m].particles['zz'][:,:t])
             )
             self.particles[m].latent_particles["y"] = (
-                np.copy(self.particles[m].bundles["y"][:,:t])
+                np.copy(self.particles[m].particles["yy"][:,:t])
             )
             self.particles[m].get_bundle_weights(data)
             #produces self.particles[m].weights with dim (bundlesize, dataN)

@@ -34,12 +34,22 @@ def get_latent_weights_1(
     as the average across k 
     """
     weights = np.empty((bundle_size, data['N']))
+    if np.ndim(data['D']) == 1 :
+        data['D'] = data['D'].reshape((data['N'], data['J']))
+        # for m in range(bundle_size):
+        #     weights[m,0] = bernoulli.logpmf(
+        #         data['D'],
+        #         p=expit(y_latent[m])
+        #     ).sum()
+    # elif np.ndim(data['D']) == 2 :
     for m in range(bundle_size):
         for t in range(data['N']):
             weights[m,t] = bernoulli.logpmf(
                 data['D'][t],
                 p=expit(y_latent[m,t])
             ).sum()
+    # else:
+    #     exit
     return weights
 
 def generate_latent_variables(

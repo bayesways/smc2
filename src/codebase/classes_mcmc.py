@@ -127,6 +127,9 @@ class MCMC:
             self.particles["alpha"],
             self.particles["beta"],
         )
+        if np.ndim(data['D']) == 2 :
+            if not latent_var_star["y"][0].shape == data['D'].shape:
+                set_trace()
         weights_star = gen_latent_weights_master(
             self.latent_model_num, data, latent_var_star["y"], self.bundle_size
         )
