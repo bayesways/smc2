@@ -141,13 +141,13 @@ def get_neg_log_likelihood(z,y,theta):
     return -get_log_likelihood(z,y,theta)
 
 def get_neg_posterior(z,y,theta):
-    return - get_log_likelihood(z,y,theta) - norm.logpdf(z)
+    return -1.*(get_log_likelihood(z,y,theta)+norm.logpdf(z))
 
 def get_grad_pi_z(z, theta):
     exp_eta = np.exp(theta['alpha'] +  z @ theta['beta'].T)
     return (exp_eta *  theta['beta'].T)/(1+exp_eta)**2
 
-def get_hessian(z, y, theta):
+def get_fisher_information(z, y, theta):
     pi_z = get_pi_z(z, theta)
     grad_pi_z = get_grad_pi_z(z, theta)
     r1 =grad_pi_z**2
@@ -156,5 +156,5 @@ def get_hessian(z, y, theta):
 
 def get_laplace_approx(y, theta):
     res = minimize(get_neg_posterior, np.array([[0]]), args=(y, theta), method='BFGS')
-    fisher_info_matrix = get_hessian(res.x, y, theta)
+    fisher_info_matrix = get_fisher_information(res.x, y, theta)
     return multivariate_normal(mean = res.x, cov = fisher_info_matrix**(-1))
