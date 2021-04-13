@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.linalg import inv
 from scipy.stats import bernoulli, multivariate_normal, logistic, norm
 from scipy.special import expit, logsumexp
 from pdb import set_trace
@@ -117,8 +118,7 @@ def generate_latent_pair_laplace(
         {
             'alpha':alpha,
             'beta':beta,
-        },
-        fisher=False
+        }
         )
     pair = dict()
     zz = lapldist.rvs(size = 1).reshape((1,))
@@ -135,12 +135,8 @@ def get_pi_z(z, theta):
 
 def get_log_likelihood(z,y,theta):
     pi_z = get_pi_z(z, theta)
-    s1 = np.sum((y*np.log(pi_z))+((1.-y)*(1.-np.log(pi_z))))
-    s2 = -.5 * np.sum(z**2)
-    return s1+s2
-
-def get_neg_log_likelihood(z,y,theta):
-    return -get_log_likelihood(z,y,theta)
+    s1 = (y*np.log(pi_z))+((1.-y)*(np.log(1. - pi_z)))
+    return np.sum(s1)
 
 def get_neg_posterior(z,y,theta):
     return -1.*(get_log_likelihood(z,y,theta)+norm.logpdf(z))
@@ -156,29 +152,7 @@ def get_fisher_information(z, y, theta):
     r2 =pi_z*(1.-pi_z)
     return 1. + np.sum(r1/r2)
 
-def get_grad2_pi_z(z, theta):
-    exp_eta = np.exp(theta['alpha'] +  z @ theta['beta'].T)
-    return (-exp_eta *  (theta['beta'].T**2))/(1+exp_eta)**2
-
-def get_grad2_log_likelihood(z,y,theta):
-    pi_z = get_pi_z(z, theta)
-    grad_pi_z = get_grad2_pi_z(z, theta)
-    grad2_pi_z = get_grad2_pi_z(z, theta)
-    
-    r1 = (y/pi_z) - ((1. - y)/(1-pi_z))
-    r2 = (y/pi_z**2) + ((1. - y)/(1-pi_z)**2)
-    
-    s1 = (grad2_pi_z*r1).sum() 
-    s2 = (grad_pi_z**2*(r2)).sum() 
-    return -1 + s1 - s2
-
-def get_hessian(z, y, theta):
-    return -get_grad2_log_likelihood(z, y, theta)
-
-def get_laplace_approx(y, theta, fisher=True):
+def get_laplace_approx(y, theta):
     res = minimize(get_neg_posterior, np.array([[1]]), args=(y, theta), method='BFGS')
-    if fisher:
-        cov_matrix = get_fisher_information(res.x, y, theta)
-    else:
-        cov_matrix = get_hessian(res.x, y, theta)
-    return multivariate_normal(mean = res.x, cov = cov_matrix**(-1))
+    cov_matrix = get_fisher_information(res.x, y, theta).reshape((1,1))
+    return multivariate_normal(mean = res.x, cov = inv(cov_matrix))

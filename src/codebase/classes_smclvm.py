@@ -4,6 +4,7 @@ from scipy.stats import bernoulli, norm
 from scipy.special import expit, logsumexp
 from codebase.ibis_tlk_latent import (
     generate_latent_pair,
+    # generate_latent_pair_laplace_db,
     generate_latent_pair_laplace,
     get_laplace_approx,
 )
@@ -60,6 +61,10 @@ class PariclesSMCLVM(Particles):
     def initialize_latentvars(self, data):
         self.particles["zz"] = np.empty((self.size, data["N"], data["K"]))
         self.particles["yy"] = np.empty((self.size, data["N"], data["J"]))
+        self.particles["mode"] = np.empty((self.size, data["N"], data["K"]))
+        self.particles["cov"] = np.empty((self.size, data["N"], data["K"], data["K"]))
+
+
 
     def get_particles_at_position_m(self, names, m):
         values_dict = dict()
@@ -92,7 +97,6 @@ class PariclesSMCLVM(Particles):
                 data['D'],
                 self.particles['alpha'][m],
                 self.particles['beta'][m])
-
             self.particles["zz"][m, t] = latentvar["z"].copy()
             self.particles["yy"][m, t] = latentvar["y"].copy()
 
@@ -107,9 +111,8 @@ class PariclesSMCLVM(Particles):
         for m in range(size):
             w1 = bernoulli.logpmf(datapoint, p=expit(yy[m])).sum()
             laplace = get_laplace_approx(
-                datapoint, {"alpha": alpha[m], "beta": beta[m]},
-                fisher=False
-            )
+                datapoint, {"alpha": alpha[m], "beta": beta[m]}
+                )
             adjusted_w = norm.logpdf(zz[m][0]) - laplace.logpdf(zz[m][0])
             weights[m] = w1 + adjusted_w
         return weights
