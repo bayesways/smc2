@@ -1,10 +1,27 @@
 import numpy as np
-from numpy.linalg import inv
-from scipy.stats import bernoulli, multivariate_normal, logistic, norm
+from numpy.linalg import inv, cholesky
+from scipy.stats import bernoulli, multivariate_normal, norm
 from scipy.special import expit, logsumexp
+from scipy.optimize import minimize
+import theano.tensor as tt
+import pymc3 as pm
+import theano
 from pdb import set_trace
-from scipy.optimize import brentq, minimize
 
+def check_posdef(S):
+    """
+    Check that matrix is positive definite
+    Inputs
+    ============
+    - matrix
+    """
+    try:
+        cholesky(S)
+        return 1
+    except NameError:
+        print("\n Error: could not compute cholesky factor of S")
+        raise
+        return 0
 
 def initialize_bundles(
     size, 
@@ -127,6 +144,25 @@ def generate_latent_pair_laplace(
     pair['y'] = yy
     return pair
 
+
+def generate_latent_pair_vb(
+    data_y,
+    alpha,
+    beta):
+    vbdist =  get_vb_approx(
+        data_y,
+        {
+            'alpha':alpha,
+            'beta':beta,
+        }
+        )
+    pair = dict()
+    zz = vbdist.rvs(size = 1).reshape((1,))
+    yy = alpha + zz @ beta.T
+    pair['z'] = zz
+    pair['y'] = yy
+    return pair
+
 ## Laplace Approximation functions
 
 def get_pi_z(z, theta):
@@ -155,4 +191,26 @@ def get_fisher_information(z, y, theta):
 def get_laplace_approx(y, theta):
     res = minimize(get_neg_posterior, np.array([[1]]), args=(y, theta), method='BFGS')
     cov_matrix = get_fisher_information(res.x, y, theta).reshape((1,1))
+    if check_posdef(cov_matrix) == 0:
+        cov_matrix = np.eye(theta['beta'].shape[1])
     return multivariate_normal(mean = res.x, cov = inv(cov_matrix))
+
+## VB approximation functions
+
+def get_vb_params(y, theta):
+    # vb_method = 'fullrank_advi'
+    vb_method = 'advi'
+    with pm.Model() as model:
+        z = pm.Normal('z', mu=0,  sigma=1, shape=(1,))
+        p = pm.invlogit(theta['alpha'] + z @ theta['beta'].T)
+        obs = pm.Bernoulli('obs', p=p, observed=y)
+        advi = pm.fit(method=vb_method, n=10000, progressbar=False)
+    vb_mean = advi.mean.eval()
+    vb_cov = advi.cov.eval()
+    return vb_mean, vb_cov
+
+def get_vb_approx(y, theta):
+    vb_mean, vb_cov = get_vb_params(y, theta)
+    if check_posdef(vb_cov) == 0:
+        vb_cov = np.eye(theta['beta'].shape[1])
+    return multivariate_normal(mean=vb_mean, cov=vb_cov)

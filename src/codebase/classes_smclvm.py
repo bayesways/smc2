@@ -6,7 +6,9 @@ from codebase.ibis_tlk_latent import (
     generate_latent_pair,
     # generate_latent_pair_laplace_db,
     generate_latent_pair_laplace,
+    generate_latent_pair_vb,
     get_laplace_approx,
+    get_vb_approx
 )
 from codebase.mcmc_tlk_latent import generate_latent_variables
 from codebase.classes import Particles
@@ -93,7 +95,13 @@ class PariclesSMCLVM(Particles):
             # )
 
             ## Laplace
-            latentvar = generate_latent_pair_laplace(
+            # latentvar = generate_latent_pair_laplace(
+            #     data['D'],
+            #     self.particles['alpha'][m],
+            #     self.particles['beta'][m])
+
+            ## VB
+            latentvar = generate_latent_pair_vb(
                 data['D'],
                 self.particles['alpha'][m],
                 self.particles['beta'][m])
@@ -117,12 +125,32 @@ class PariclesSMCLVM(Particles):
             weights[m] = w1 + adjusted_w
         return weights
 
+    def compute_weights_at_point_vb(self, zz, yy, alpha, beta, size, datapoint):
+        weights = np.empty(size)
+        for m in range(size):
+            w1 = bernoulli.logpmf(datapoint, p=expit(yy[m])).sum()
+            vbdist = get_vb_approx(
+                datapoint, {"alpha": alpha[m], "beta": beta[m]}
+                )
+            adjusted_w = norm.logpdf(zz[m][0]) - vbdist.logpdf(zz[m][0])
+            weights[m] = w1 + adjusted_w
+        return weights
+
     def get_theta_incremental_weights(self, data, t):
         # self.incremental_weights = self.compute_weights_at_point(
         #     self.particles["yy"][:, t], self.size, data["D"]
         # )
         ## Laplace
         self.incremental_weights = self.compute_weights_at_point_laplace(
+            self.particles['zz'][:,t],
+            self.particles['yy'][:,t],
+            self.particles['alpha'],
+            self.particles['beta'],
+            self.size,
+            data['D']
+            )
+
+        self.incremental_weights = self.compute_weights_at_point_vb(
             self.particles['zz'][:,t],
             self.particles['yy'][:,t],
             self.particles['alpha'],
