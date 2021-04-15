@@ -8,17 +8,17 @@ data {
 parameters {
   vector[J] alpha;
   matrix[J,K] beta;
-  matrix[N,K] zz;
+  matrix[N,K] z;
 }
 
 transformed parameters{
-  matrix[N,J] yy;
-  for (n in 1:N) yy[n,] = to_row_vector(alpha) + zz[n,] * beta';
+  matrix[N,J] y;
+  for (n in 1:N) y[n,] = to_row_vector(alpha) + z[n,] * beta';
 }
   
 model {
   to_vector(beta) ~ normal(0, 1);
   to_vector(alpha) ~ normal(0, 10);
-  to_vector(zz) ~ normal(0, 1);
-  for (j in 1:J) D[, j] ~ bernoulli_logit(yy[, j]);
+  to_vector(z) ~ normal(0, 1);
+  for (j in 1:J) D[, j] ~ bernoulli_logit(y[, j]);
 }

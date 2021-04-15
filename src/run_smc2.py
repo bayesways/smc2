@@ -1,4 +1,4 @@
-from codebase.classes_smc2 import ParticlesLVM
+from codebase.classes_smc2 import ParticlesSMC2
 from codebase.ibis import model_phonebook, essl, corrcoef_2D
 from codebase.mcmc_tlk_latent import (
     gen_latent_weights_master
@@ -11,7 +11,7 @@ from codebase.file_utils import (
 )
 from scipy.special import logsumexp
 from pdb import set_trace
-
+from sys import exit
 def run_smc2(
     exp_data,
     model_num,
@@ -25,15 +25,17 @@ def run_smc2(
 
     param_names = model_phonebook(model_num)["param_names"]
     latent_names = model_phonebook(model_num)["latent_names"]
+    stan_names = model_phonebook(model_num)["stan_names"]
     jitter_corrs = dict()
     for t in range(exp_data.size):
         jitter_corrs[t] = dict()
-    particles = ParticlesLVM(
-        name="ibis_lvm",
+    particles = ParticlesSMC2(
+        name="smc2",
         model_num=model_num,
         size=size,
         bundle_size=bundle_size,
         param_names=param_names,
+        stan_names = stan_names,
         latent_names=latent_names,
         latent_model_num=1,
         mcmc_nsim = 15,
@@ -53,13 +55,12 @@ def run_smc2(
     degeneracy_limit = 0.5
 
     particles.initialize_particles()
-    particles.initialize_bundles(exp_data.get_stan_data())
     particles.sample_prior_particles(exp_data.get_stan_data())  # sample prior particles
+    particles.initialize_bundles(exp_data.get_stan_data())
     particles.reset_weights()  # set weights to 0
     particles.initialize_counter(exp_data.get_stan_data())
 
     for t in tqdm(range(exp_data.size)):
-
         particles.sample_latent_bundle_at_t(t, exp_data.get_stan_data_at_t2(t))
         particles.get_theta_incremental_weights_at_t(exp_data.get_stan_data_at_t(t))
         log_lklhds[t] = particles.get_loglikelihood_estimate()
@@ -79,7 +80,7 @@ def run_smc2(
             # add corr of param before jitter
             pre_jitter = dict()
             for p in param_names:
-                pre_jitter[p] = particles.extract_particles_in_numpy_array(p)
+                pre_jitter[p] = particles.extract_particles_in_numpy_array(p).copy()
             ###
             particles.jitter(exp_data.get_stan_data_upto_t(t + 1), t+1)
 
@@ -89,7 +90,6 @@ def run_smc2(
                     pre_jitter[p], particles.extract_particles_in_numpy_array(p)
                 )
             ###
-            
             particles.check_particles_are_distinct()
 
             particles.reset_weights()

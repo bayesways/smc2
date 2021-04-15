@@ -105,7 +105,7 @@ def run_mcmc_jitter(
     particles.acceptance = np.zeros(stan_data["N"])
     particles.particles = initial_values.copy()
     particles.sample_latent_variables(stan_data)
-
+    
     for i in range(mcmc_nsim):
         particles.get_bundle_weights(stan_data)
         particles.sample_latent_particles_star(stan_data)
