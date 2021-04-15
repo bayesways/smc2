@@ -141,14 +141,14 @@ class PariclesSMCLVM(Particles):
         #     self.particles["yy"][:, t], self.size, data["D"]
         # )
         ## Laplace
-        self.incremental_weights = self.compute_weights_at_point_laplace(
-            self.particles['zz'][:,t],
-            self.particles['yy'][:,t],
-            self.particles['alpha'],
-            self.particles['beta'],
-            self.size,
-            data['D']
-            )
+        # self.incremental_weights = self.compute_weights_at_point_laplace(
+        #     self.particles['zz'][:,t],
+        #     self.particles['yy'][:,t],
+        #     self.particles['alpha'],
+        #     self.particles['beta'],
+        #     self.size,
+        #     data['D']
+        #     )
 
         self.incremental_weights = self.compute_weights_at_point_vb(
             self.particles['zz'][:,t],
