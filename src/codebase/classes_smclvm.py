@@ -1,6 +1,6 @@
 import numpy as np
 from codebase.ibis import run_mcmc, get_resample_index
-from scipy.stats import bernoulli, norm
+from scipy.stats import bernoulli, multivariate_normal
 from scipy.special import expit, logsumexp
 from codebase.ibis_tlk_latent import (
     generate_latent_pair,
@@ -95,16 +95,17 @@ class PariclesSMCLVM(Particles):
             # )
 
             ## Laplace
-            # latentvar = generate_latent_pair_laplace(
-            #     data['D'],
-            #     self.particles['alpha'][m],
-            #     self.particles['beta'][m])
-
-            ## VB
-            latentvar = generate_latent_pair_vb(
+            latentvar = generate_latent_pair_laplace(
                 data['D'],
                 self.particles['alpha'][m],
                 self.particles['beta'][m])
+
+            ## VB
+            # latentvar = generate_latent_pair_vb(
+            #     data['D'],
+            #     self.particles['alpha'][m],
+            #     self.particles['beta'][m])
+            
             self.particles["zz"][m, t] = latentvar["z"].copy()
             self.particles["yy"][m, t] = latentvar["y"].copy()
 
@@ -121,7 +122,7 @@ class PariclesSMCLVM(Particles):
             laplace = get_laplace_approx(
                 datapoint, {"alpha": alpha[m], "beta": beta[m]}
                 )
-            adjusted_w = norm.logpdf(zz[m][0]) - laplace.logpdf(zz[m][0])
+            adjusted_w = multivariate_normal.logpdf(zz[m][0]) - laplace.logpdf(zz[m][0])
             weights[m] = w1 + adjusted_w
         return weights
 
@@ -132,7 +133,7 @@ class PariclesSMCLVM(Particles):
             vbdist = get_vb_approx(
                 datapoint, {"alpha": alpha[m], "beta": beta[m]}
                 )
-            adjusted_w = norm.logpdf(zz[m][0]) - vbdist.logpdf(zz[m][0])
+            adjusted_w = multivariate_normal.logpdf(zz[m][0]) - vbdist.logpdf(zz[m][0])
             weights[m] = w1 + adjusted_w
         return weights
 
@@ -140,17 +141,9 @@ class PariclesSMCLVM(Particles):
         # self.incremental_weights = self.compute_weights_at_point(
         #     self.particles["yy"][:, t], self.size, data["D"]
         # )
-        ## Laplace
-        # self.incremental_weights = self.compute_weights_at_point_laplace(
-        #     self.particles['zz'][:,t],
-        #     self.particles['yy'][:,t],
-        #     self.particles['alpha'],
-        #     self.particles['beta'],
-        #     self.size,
-        #     data['D']
-        #     )
 
-        self.incremental_weights = self.compute_weights_at_point_vb(
+        # Laplace
+        self.incremental_weights = self.compute_weights_at_point_laplace(
             self.particles['zz'][:,t],
             self.particles['yy'][:,t],
             self.particles['alpha'],
@@ -158,6 +151,16 @@ class PariclesSMCLVM(Particles):
             self.size,
             data['D']
             )
+
+        # VB
+        # self.incremental_weights = self.compute_weights_at_point_vb(
+        #     self.particles['zz'][:,t],
+        #     self.particles['yy'][:,t],
+        #     self.particles['alpha'],
+        #     self.particles['beta'],
+        #     self.size,
+        #     data['D']
+        #     )
 
     def jitter_and_save_mcmc_parms(self, data, t, m=0):
         fit_run = run_mcmc(

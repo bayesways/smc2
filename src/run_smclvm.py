@@ -61,6 +61,7 @@ def run_smclvm(
         particles.get_theta_incremental_weights(exp_data.get_stan_data_at_t(t), t)
         log_lklhds[t] = particles.get_loglikelihood_estimate()
         particles.update_weights()
+        set_trace()
 
         if (essl(particles.weights) < degeneracy_limit * particles.size) and (
             t + 1
