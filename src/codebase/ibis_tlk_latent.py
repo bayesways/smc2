@@ -189,8 +189,9 @@ def get_fisher_information(z, y, theta):
     return 1. + np.sum(r1/r2)
 
 def get_laplace_approx(y, theta):
+    set_trace()
     res = minimize(get_neg_posterior, np.array([[1,1]]), args=(y, theta), method='BFGS')
-    cov_matrix = get_fisher_information(res.x, y, theta).reshape((1,2))
+    cov_matrix = get_fisher_information(res.x, y, theta)
     if check_posdef(cov_matrix) == 0:
         cov_matrix = np.eye(theta['beta'].shape[1])
     return multivariate_normal(mean = res.x, cov = inv(cov_matrix))
