@@ -1,8 +1,12 @@
 import sys, os
 
 def model_phonebook_path(model_num, prior, data_type='cont'):
-    path_to_stan = './codebase/stancode/disc/'
-
+    if model_num in range(0,4):
+        path_to_stan = './codebase/stancode/disc/'
+    elif model_num in [5,6]:
+        path_to_stan = './codebase/stancode/cont/'
+    else:
+        pass
     if model_num == 1:
         if prior:
             path = 'CFA/EZ/model_1_prior.stan'
@@ -23,11 +27,16 @@ def model_phonebook_path(model_num, prior, data_type='cont'):
             path = 'smc2/model_1_1factor_prior3.stan'
         else:
             path = 'smc2/model_1_1factor3.stan'
-    # elif model_num == 3:
-    #     if prior:
-    #         path = 'CFA/AZ/model2_big5_prior.stan'
-    #     else:
-    #         path = 'CFA/AZ/model2_big5.stan' 
+    elif model_num == 5:
+        if prior:
+            path = 'CFA/AZ/model_2_prior.stan'
+        else:
+            path = 'CFA/AZ/model_2.stan' 
+    elif model_num == 6:
+        if prior:
+            path = 'CFA/AZ/model2_big5_prior.stan'
+        else:
+            path = 'CFA/AZ/model2_big5.stan' 
     else:
         print("model number not found")
         sys.exit()
@@ -67,18 +76,19 @@ def model_phonebook(model_num):
     elif model_num == 4:
         names['param_names'] = ['beta', 'alpha']
         names['latent_names'] = ['z', 'y']
-    # elif model_num == 3 :
-    #     names['param_names'] = [
-    #         'sigma_square',
-    #         'alpha',
-    #         'beta_free',
-    #         'beta_zeros',
-    #         'Phi_cov',
-    #         'Marg_cov',
-    #         'beta',
-    #         'Omega'
-    #         ]
-    #     names['latent_names'] = []
+    elif model_num in [5,6] :
+        names['param_names'] = [
+            'sigma_square',
+            'alpha',
+            'beta_free',
+            'beta_zeros',
+            'Phi_cov',
+            'Marg_cov',
+            'beta',
+            'Omega'
+            ]
+        names['stan_names'] = names['param_names']
+        names['latent_names'] = []
     else:
         print("model number not found")
         sys.exit()

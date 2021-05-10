@@ -117,18 +117,39 @@ class Particles:
             values_dict[name] = self.particles[name][m]
         return values_dict
 
+    def check_particles_are_distinct(self):
+        for name in self.param_names+self.latent_names:
+            ext_part = self.particles[name]
+            dim = ext_part.shape
+            uniq_dim = np.unique(ext_part, axis=0).shape
+            assert dim == uniq_dim
+            
     def jitter_and_save_mcmc_parms(self, data, m=0):
-        fit_run = run_mcmc(
-            data=data,
-            sm=self.compiled_model,
-            num_samples=self.hmc_post_adapt_nsim,  # normally 20
-            num_warmup=self.hmc_adapt_nsim,  # normally 1000
-            num_chains=1,  # don't change
-            log_dir=self.log_dir,
-            initial_values=self.get_particles_at_position_m(m),
-            load_inv_metric=False,
-            adapt_engaged=True,
-        )
+        if self.mass_matrix is None:
+            fit_run = run_mcmc(
+                data=data,
+                sm=self.compiled_model,
+                num_samples=self.hmc_post_adapt_nsim,  # normally 20
+                num_warmup=self.hmc_adapt_nsim,  # normally 1000
+                num_chains=1,  # don't change
+                log_dir=self.log_dir,
+                initial_values=self.get_particles_at_position_m(m),
+                load_inv_metric=False,
+                adapt_engaged=True,
+            )
+        else:
+            fit_run = run_mcmc(
+                data=data,
+                sm=self.compiled_model,
+                num_samples=self.hmc_post_adapt_nsim,  # normally 20
+                num_warmup=self.hmc_adapt_nsim,  # normally 1000
+                num_chains=1,  # don't change
+                log_dir=self.log_dir,
+                initial_values=self.get_particles_at_position_m(m),
+                inv_metric=self.mass_matrix,
+                adapt_engaged=True,
+            )
+
         self.mass_matrix = fit_run.get_inv_metric(as_dict=True)
         self.stepsize = fit_run.get_stepsize()
         last_position = fit_run.get_last_position()[0]  # select chain 1
@@ -139,7 +160,7 @@ class Particles:
         fit_run = run_mcmc(
             data=data,
             sm=self.compiled_model,
-            num_samples=self.hmc_adapt_nsim,  # normally 20
+            num_samples=self.hmc_post_adapt_nsim,  # normally 20
             num_warmup=0,
             num_chains=1,  # don't change
             log_dir=self.log_dir,

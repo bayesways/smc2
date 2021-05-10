@@ -45,7 +45,7 @@ exp_data = Data(
 exp_data.generate()
 save_obj(exp_data, 'data', log_dir)
 
-model_num = 3
+model_num = 5
 
 ibis = run_ibis(
     exp_data,
