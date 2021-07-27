@@ -9,6 +9,7 @@ from codebase.file_utils import (
 )
 from codebase.ibis import exp_and_normalise
 from run_ibis import run_ibis
+from pdb import set_trace
 from scipy.special import logsumexp
 
 
@@ -34,22 +35,22 @@ else:
     log_dir = path_backslash(log_dir)
     print("\n\nReading from existing directory: %s" % log_dir)
 
+
+data_model_num=4
 # generate data
 exp_data = Data(
     name = args.task_handle, 
-    model_num = 4,  
-    size = 30,
+    model_num = data_model_num,  
+    size = 100,
     random_seed = 0
     )
     
 exp_data.generate()
 save_obj(exp_data, 'data', log_dir)
 
-model_num = 5
-
 ibis = run_ibis(
     exp_data,
-    model_num,
+    args.model_num,
     100,
     args.gen_model,
     log_dir

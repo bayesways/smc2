@@ -45,10 +45,11 @@ def run_ibis(
         particles.load_model()
 
     particles.sample_prior_particles(exp_data.get_stan_data()) # sample prior particles
+    particles.jitter(exp_data.get_stan_data_upto_t(30))
     particles.reset_weights() # set weights to 0
     log_lklhds = np.empty(exp_data.size)
     degeneracy_limit = 0.5
-    for t in tqdm(range(exp_data.size)):
+    for t in tqdm(range(30, exp_data.size)):
         particles.get_incremental_weights(
             exp_data.get_stan_data_at_t(t)
             )

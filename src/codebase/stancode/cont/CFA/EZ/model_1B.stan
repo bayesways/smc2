@@ -16,32 +16,31 @@ parameters {
   vector<lower=0>[J] sigma_square;
   vector[J] alpha;
   matrix[3,K] beta_free; // 3 free eleements per factor
-  cov_matrix [K] Phi_cov;
+  cholesky_factor_corr[K] Phi_L;
 }
 
 transformed parameters{
   cov_matrix[J] Theta;
   matrix[J,K] beta;
   cov_matrix[J] Marg_cov;
+  corr_matrix[K] Phi_cov;
   
+  Phi_cov = multiply_lower_tri_self_transpose(Phi_L);
   Theta = diag_matrix(sigma_square);
 
   for(j in 1:J) {
     for (k in 1:K) beta[j,k] = 0;
     }
-
   // set the free elements
-  for (k in 1:K) beta[3*(k-1) : 3+3*(k-1), k] = beta_free[1:3,k];
-
+  for (k in 1:K) beta[1+3*(k-1) : 3+3*(k-1), k] = beta_free[1:3,k];
   Marg_cov = beta * Phi_cov * beta'+ Theta;
-
 }
 
 model {
   to_vector(beta_free) ~ normal(0, 1);
   to_vector(alpha) ~ normal(0, 10);
   for(j in 1:J) sigma_square[j] ~ inv_gamma(c0, (c0-1)/sigma_prior[j]);
-  Phi_cov ~ inv_wishart(J+4, I_K);
+  Phi_L ~ lkj_corr_cholesky(2);
   for (n in 1:N){
     y[n, ] ~ multi_normal(alpha,  Marg_cov);
   }
