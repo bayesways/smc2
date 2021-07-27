@@ -3,7 +3,7 @@ import sys, os
 def model_phonebook_path(model_num, prior, data_type='cont'):
     if model_num in range(0,4):
         path_to_stan = './codebase/stancode/disc/'
-    elif model_num in [5,6,7,8,9,10]:
+    elif model_num in [5,6,7,8,9,10,11]:
         path_to_stan = './codebase/stancode/cont/'
     else:
         pass
@@ -57,6 +57,11 @@ def model_phonebook_path(model_num, prior, data_type='cont'):
             path = 'EFA/model_2_prior.stan'
         else:
             path = 'EFA/model_2.stan' 
+    elif model_num == 11:
+        if prior:
+            path = 'CFA/EZ/model1_big5_prior.stan'
+        else:
+            path = 'CFA/EZ/model1_big5.stan' 
     else:
         print("model number not found")
         sys.exit()
@@ -109,7 +114,7 @@ def model_phonebook(model_num):
             ]
         names['stan_names'] = names['param_names']
         names['latent_names'] = []
-    elif model_num in [7,8] :
+    elif model_num in [7,8,11] :
         names['param_names'] = [
             'sigma_square',
             'alpha',
