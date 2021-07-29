@@ -36,12 +36,12 @@ else:
     print("\n\nReading from existing directory: %s" % log_dir)
 
 
-data_model_num=4
+data_model_num='big5'
 # generate data
 exp_data = Data(
     name = args.task_handle, 
     model_num = data_model_num,  
-    size = 100,
+    size = 677,
     random_seed = 0
     )
     
