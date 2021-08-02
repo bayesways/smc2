@@ -53,7 +53,7 @@ save_obj(exp_data, 'data', log_dir)
 ibis = run_ibis(
     exp_data,
     args.model_num,
-    500,
+    100,
     args.gen_model,
     log_dir
     )
