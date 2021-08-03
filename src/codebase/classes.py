@@ -125,8 +125,7 @@ class Particles:
             assert dim == uniq_dim
             
     def jitter_and_save_mcmc_parms(self, data, m=0):
-        # if self.mass_matrix is None:
-        if True:
+        if self.mass_matrix is None:
             fit_run = run_mcmc(
                 data=data,
                 sm=self.compiled_model,
