@@ -150,7 +150,6 @@ class Particles:
                 adapt_engaged=True,
             )
 
-        set_trace()
         self.mass_matrix = fit_run.get_inv_metric(as_dict=True)
         self.stepsize = fit_run.get_stepsize()
         last_position = fit_run.get_last_position()[0]  # select chain 1
