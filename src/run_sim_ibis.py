@@ -43,7 +43,7 @@ exp_data = Data(
     name = args.task_handle, 
     model_num = data_model_num,  
     # size = 677,
-    size = 100,
+    size = 200,
     random_seed = 0
     )
     
@@ -53,7 +53,7 @@ save_obj(exp_data, 'data', log_dir)
 ibis = run_ibis(
     exp_data,
     args.model_num,
-    100,
+    1000,
     args.gen_model,
     log_dir
     )
