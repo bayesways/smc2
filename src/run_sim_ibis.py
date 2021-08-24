@@ -27,7 +27,7 @@ args = parser.parse_args()
 
 
 if args.existing_directory is None:
-    log_dir = make_folder(args.task_handle)  
+    log_dir = make_folder(args.task_handle+'_m'+str(args.model_num))  
     print("\n\nCreating new directory: %s" % log_dir)
 
 else:
