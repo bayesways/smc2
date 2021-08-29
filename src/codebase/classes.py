@@ -9,6 +9,7 @@ from codebase.ibis import (
     remove_chain_dim,
 )
 from codebase.ibis_tlk import gen_weights_master
+from codebase.scoring_rules import get_variogram_score
 from codebase.file_utils import save_obj, load_obj, make_folder, path_backslash
 from codebase.resampling_routines import multinomial
 from scipy.special import logsumexp
@@ -182,3 +183,19 @@ class Particles:
         return logsumexp(self.incremental_weights + self.weights) - logsumexp(
             self.weights
         )
+
+    def get_variogram_score(self, data):
+        if np.count_nonzero( self.weights) == 0:
+            return get_variogram_score(
+            self.particles,
+            data['y']
+            )
+        else:
+            resample_index = get_resample_index(self.weights, self.size)
+            samples=dict()
+            for name in self.param_names:
+                samples[name] = self.particles[name][resample_index].copy()
+            return get_variogram_score(
+                samples,
+                data['y']
+                )

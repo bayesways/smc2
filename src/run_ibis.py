@@ -1,5 +1,6 @@
 from codebase.classes import Particles
 from codebase.ibis import model_phonebook, essl, corrcoef_2D
+from codebase.scoring_rules import get_variogram_score
 import numpy as np
 from tqdm import tqdm
 from codebase.file_utils import (
@@ -48,8 +49,12 @@ def run_ibis(
     particles.jitter(exp_data.get_stan_data_upto_t(30))
     particles.reset_weights() # set weights to 0
     log_lklhds = np.empty(exp_data.size)
+    scoring_rule = np.empty(exp_data.size)
     degeneracy_limit = 0.5
-    for t in tqdm(range(30, exp_data.size)):
+    for t in tqdm(range(30, exp_data.size)):  
+        scoring_rule[t] = particles.get_variogram_score(
+            exp_data.get_stan_data_at_t(t)
+            )
         particles.get_incremental_weights(
             exp_data.get_stan_data_at_t(t)
             )
@@ -77,10 +82,11 @@ def run_ibis(
             particles.reset_weights()
         else:
             pass
-
+        
         save_obj(particles, 'particles', log_dir)
         save_obj(t, 't', log_dir)
     save_obj(log_lklhds, 'log_lklhds', log_dir)
+    save_obj(scoring_rule, 'scoring_rule', log_dir)
     save_obj(jitter_corrs, 'jitter_corrs', log_dir)
 
 
