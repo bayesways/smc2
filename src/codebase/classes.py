@@ -3,15 +3,11 @@ from codebase.ibis import (
     compile_model,
     sample_prior_particles,
     get_resample_index,
-    run_mcmc,
-    get_initial_values_dict,
-    exp_and_normalise,
-    remove_chain_dim,
+    run_mcmc
 )
 from codebase.ibis_tlk import gen_weights_master
-from codebase.scoring_rules import get_variogram_score
-from codebase.file_utils import save_obj, load_obj, make_folder, path_backslash
-from codebase.resampling_routines import multinomial
+from codebase.scoring_rules import get_variogram_score, get_logscore
+from codebase.file_utils import load_obj
 from scipy.special import logsumexp
 from shutil import copyfile
 from pdb import set_trace
@@ -199,3 +195,21 @@ class Particles:
                 samples,
                 data['y']
                 )
+    
+    def get_logscore(self, data):
+        if np.count_nonzero( self.weights) == 0:
+            return get_logscore(
+                self.particles,
+                data            
+                )
+        else:
+            resample_index = get_resample_index(self.weights, self.size)
+            samples=dict()
+            for name in self.param_names:
+                samples[name] = self.particles[name][resample_index].copy()
+            return get_logscore(
+                samples,
+                data
+                )
+
+                

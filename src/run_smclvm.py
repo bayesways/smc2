@@ -1,11 +1,9 @@
 from codebase.classes_smclvm import PariclesSMCLVM
 from codebase.ibis import model_phonebook, essl, corrcoef_2D
-from codebase.mcmc_tlk_latent import gen_latent_weights_master
 import numpy as np
 from tqdm import tqdm
 from codebase.file_utils import (
-    save_obj,
-    load_obj,
+    save_obj
 )
 from scipy.special import logsumexp
 from pdb import set_trace
@@ -47,6 +45,7 @@ def run_smclvm(
         particles.load_model()
 
     log_lklhds = np.empty(exp_data.size)
+    scoring_rule = np.empty(exp_data.size)
     degeneracy_limit = 0.5
 
     particles.sample_prior_particles(
@@ -57,6 +56,9 @@ def run_smclvm(
     particles.initialize_counter(exp_data.get_stan_data())
 
     for t in tqdm(range(exp_data.size)):
+        scoring_rule[t] = particles.get_logscore(
+            exp_data.get_stan_data_at_t(t)['D'].reshape((1,6))
+            )
         particles.sample_latent_variables(exp_data.get_stan_data_at_t(t), t)
         particles.get_theta_incremental_weights(exp_data.get_stan_data_at_t(t), t)
         log_lklhds[t] = particles.get_loglikelihood_estimate()
@@ -65,6 +67,8 @@ def run_smclvm(
         if (essl(particles.weights) < degeneracy_limit * particles.size) and (
             t + 1
         ) < exp_data.size:
+            
+
             particles.add_ess(t)
             particles.resample_particles()
             particles.gather_variables_prejitter(
@@ -98,6 +102,8 @@ def run_smclvm(
         save_obj(particles, "particles", log_dir)
         save_obj(jitter_corrs, "jitter_corrs", log_dir)
         save_obj(log_lklhds, "log_lklhds", log_dir)
+        save_obj(scoring_rule, 'scoring_rule', log_dir)
+
 
     print("\n\n")
     marg_lklhd = np.exp(logsumexp(log_lklhds))

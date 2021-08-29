@@ -3,9 +3,9 @@ from numpy.linalg import inv, cholesky
 from scipy.stats import bernoulli, multivariate_normal, norm
 from scipy.special import expit, logsumexp
 from scipy.optimize import minimize
-import theano.tensor as tt
-import pymc3 as pm
-import theano
+# import theano.tensor as tt
+# import pymc3 as pm
+# import theano
 from pdb import set_trace
 
 def check_posdef(S):
