@@ -107,7 +107,6 @@ def get_method2(ps, dim_J, dim_K, nsim):
 
 
 def get_logscore(ps, data):
-
     mcmc_length = ps["alpha"].shape[0]
     dim_J = ps['alpha'].shape[1]
     dim_K = ps["beta"].shape[-1]
