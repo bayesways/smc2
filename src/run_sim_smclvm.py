@@ -29,7 +29,7 @@ else:
     print("\n\nReading from existing directory: %s" % log_dir)
 
 # generate data
-exp_data = Data(name=args.task_handle, model_num=6, size=200, random_seed=2)
+exp_data = Data(name=args.task_handle, model_num=1, size=200, random_seed=2)
 
 exp_data.generate()
 save_obj(exp_data, "data", log_dir)
