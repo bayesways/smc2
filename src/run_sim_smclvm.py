@@ -29,16 +29,15 @@ else:
     print("\n\nReading from existing directory: %s" % log_dir)
 
 # generate data
-exp_data = Data(name=args.task_handle, model_num=6, size=10, random_seed=2)
+exp_data = Data(name=args.task_handle, model_num=6, size=200, random_seed=2)
 
 exp_data.generate()
 save_obj(exp_data, "data", log_dir)
-model_num = 1
 
 smclvm = run_smclvm(
     exp_data,
     args.model_num,
-    12,
+    1000,
     args.gen_model,
     log_dir
     )
