@@ -8,20 +8,27 @@ Sequential Monte Carlo Methods for Factor Analysis
 4) SMC2 : IBIS with Pseudomarginal for binary data. The main function is in `run_sim_smc2.py` 
 5) IBIS-LVM : IBIS with Latent Variables as part of the paremeter vector in `run_sim_smclvm.py` 
 
+
+### Current results
+
+Continuous Data experiments : correctness and model comparisons in notebooks 3.3 - 3.4.2 , and notebooks 8.1,8.2
+
+Binary Data: correctness is established in notebook 7.1 (and possibly previous notebooks are useful as well.)
+
 ### On Fabian
 
 Use the environment `pystan-dev`. To update the environment run `conda env update --file env_fabian.yml`.
 The environment works with the anaconda3/5.3.0. If it's not loaded by default you need to:
 
-1. Remove `apps/anaconda3/5.0.0`   
-2. Activate `apps/anaconda3/5.3.0` 
-3. Activate env `pystan-dev`    
+1. Activate `apps/anaconda3/5.3.0` 
+2. Add new compiler `compilers/gcc/10.2.0`
+3. Activate env `pystan2`    
 
 
     ```
-    module rm apps/anaconda3/5.0.0
     module add apps/anaconda3/5.3.0
-    source activate pystan-dev
+    module add compilers/gcc/10.2.0
+    source activate pystan2
     ```
 
 Also remember to activate the environment before submiting jobs to `qsub`.
