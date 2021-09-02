@@ -11,11 +11,9 @@ transformed data{
 
 generated quantities{
   vector[J] alpha;
-  vector<lower=0>[J] sigma;
-  cholesky_factor_corr[J] L_R; 
+  vector<lower=0>[J] sigma_square;
   cov_matrix[J] Marg_cov;
-  alpha = multi_normal_rng(zeros, 25*I);
-  for (j in 1:J) sigma[j] = fabs(cauchy_rng(0, 2.));
-  L_R = lkj_corr_cholesky_rng(J, 2.);
-  Marg_cov = multiply_lower_tri_self_transpose(diag_pre_multiply(sigma, L_R));  
+  for (j in 1:J) sigma_square[j] = inv_gamma_rng(1, 1);
+  Marg_cov = diag_matrix(sigma_square);
+  alpha = multi_normal_rng(zeros, Marg_cov);
 }

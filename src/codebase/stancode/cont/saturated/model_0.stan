@@ -7,17 +7,15 @@ data{
 
 parameters {
   vector[J] alpha;
-  cholesky_factor_corr[J] L_R; 
-  vector<lower=0>[J] sigma;
+  vector<lower=0>[J] sigma_square;
+}
+
+transformed parameters {
+  cov_matrix[J] Marg_cov = diag_matrix(sigma_square); 
 }
 
 model{
-  alpha ~ normal(0,5);
-  L_R ~ lkj_corr_cholesky(2);
-  sigma ~ cauchy(0,2.);
-  for (n in 1:N) y[n,] ~ multi_normal_cholesky(alpha, diag_pre_multiply(sigma, L_R));
-}
-
-generated quantities{
-  cov_matrix[J] Marg_cov = multiply_lower_tri_self_transpose(diag_pre_multiply(sigma, L_R));  
+  sigma_square ~ inv_gamma(1,1);
+  alpha ~ multi_normal(alpha, Marg_cov);
+  for (n in 1:N) y[n,] ~ multi_normal(alpha, Marg_cov);
 }

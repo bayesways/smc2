@@ -79,7 +79,7 @@ def gen_data_master(
     elif model_num == 2:
         return gen_data_2(
             nsim_data,
-            J=6,
+            J=1,
             random_seed=random_seed
             )
     elif model_num == 4:
@@ -169,15 +169,16 @@ def gen_data_2(
     if random_seed is not None:
         np.random.seed(random_seed)
 
-    # alpha = np.zeros(J)
-    alpha = np.array([1,2,-1,-2,0,4]).astype(float)
-    sigma = np.array([1,2,3,1,2,3]).astype(float)
+    alpha = np.zeros(J)
+    # alpha = np.array([1,2,-1,-2,0,4]).astype(float)
+    # sigma = np.array([1,2,3,1,2,3]).astype(float)
+    sigma = np.ones(J)
     Marg_cov = np.diag(sigma) @ np.eye(J) @ np.diag(sigma)
     yy = multivariate_normal.rvs(
         mean=alpha,
         cov=Marg_cov,
         size=nsim_data
-    )
+    ).reshape((nsim_data,J))
     
     data = dict()
     data['random_seed'] = random_seed

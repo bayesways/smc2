@@ -35,14 +35,14 @@ else:
     print("\n\nReading from existing directory: %s" % log_dir)
 
 
-data_model_num='big5'
-# data_model_num=4
+# data_model_num='big5'
+data_model_num=2
 # generate data
 exp_data = Data(
     name = args.task_handle, 
     model_num = data_model_num,  
-    size = 677,
-    # size = 200,
+    # size = 677,
+    size = 100,
     random_seed = 0
     )
     
@@ -52,7 +52,7 @@ save_obj(exp_data, 'data', log_dir)
 ibis = run_ibis(
     exp_data,
     args.model_num,
-    1000,
+    100,
     args.gen_model,
     log_dir
     )
