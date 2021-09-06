@@ -3,7 +3,7 @@ import pandas as pd
 from scipy.stats import multivariate_normal, norm, bernoulli, uniform
 from numpy.linalg import inv,cholesky
 from scipy.special import expit, logit
-
+from pdb import set_trace
 
 def flatten_matrix(a, include_diag = True):
     """
@@ -66,6 +66,7 @@ def gen_data_master(
     J=6,
     K=1,
     c=1,
+    subsample_size=None,
     random_seed=None
     ):
     if random_seed is None: 
@@ -95,11 +96,15 @@ def gen_data_master(
             random_seed=random_seed
             )
     elif model_num == 'big5':
-        return get_big5()
+        return get_big5(
+            subsample_size=nsim_data,
+            random_seed=random_seed
+            )
         
     
 
-def get_big5():
+def get_big5(subsample_size,
+            random_seed):
     standardize = 1
     gender = 'women'
     
@@ -108,6 +113,9 @@ def get_big5():
     df = df.replace(-9, np.nan).astype(float)
     df.dropna(inplace=True)
     df = df.astype(int)
+    if subsample_size is not None:
+        df = df.sample(n=subsample_size, random_state=random_seed).reset_index(drop=True)
+    set_trace()
     data = dict()
     data['N'] = df.shape[0]
     data['K'] = 5
