@@ -97,7 +97,7 @@ def gen_data_master(
     elif model_num == 'big5':
         return get_big5(
             subsample_size=nsim_data,
-            random_seed=1
+            random_seed=random_seed
             )
         
     
@@ -114,7 +114,6 @@ def get_big5(subsample_size,
     df = df.astype(int)
     if subsample_size is not None:
         df = df.sample(n=subsample_size, random_state=random_seed).reset_index(drop=True)
-    set_trace()
     data = dict()
     data['N'] = df.shape[0]
     data['K'] = 5
