@@ -66,7 +66,6 @@ def gen_data_master(
     J=6,
     K=1,
     c=1,
-    subsample_size=None,
     random_seed=None
     ):
     if random_seed is None: 
@@ -98,7 +97,7 @@ def gen_data_master(
     elif model_num == 'big5':
         return get_big5(
             subsample_size=nsim_data,
-            random_seed=random_seed
+            random_seed=1
             )
         
     
