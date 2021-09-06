@@ -255,11 +255,11 @@ def gen_data_4(
     #                     [0, b]], dtype=float)
     beta = np.array(
         [[1, 0],
-        [b, 0.3],
+        [b, 0],
         [b, 0],
         [0, 1],
-        [0.3, b],
-        [0.3, b]],
+        [0, b],
+        [0, b]],
         dtype=float)
 
     sigma_z = np.repeat(np.sqrt(c), K)
