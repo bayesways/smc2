@@ -99,12 +99,18 @@ def gen_data_master(
             subsample_size=nsim_data,
             random_seed=random_seed
             )
+    elif model_num == 'big5_batch':
+        return get_big5_batch()
+    # elif model_num == 'big5_part2':
+    #     return get_big5_part2()
+    # elif model_num == 'big5_part3':
+    #     return get_big5_part3()
         
     
 
 def get_big5(subsample_size,
             random_seed):
-    standardize = 1
+    standardize = True
     gender = 'women'
     
     print("\n\nReading data for %s"%gender)
@@ -128,6 +134,83 @@ def get_big5(subsample_size,
     data['stan_constants'] = ['N','J', 'K', 'sigma_prior']
     data['stan_data'] = ['y']
     return data
+
+
+
+def get_big5_batch():
+    standardize = True
+    gender = 'women'
+    
+    print("\n\nReading data for %s"%gender)
+    df = pd.read_csv("../dat/muthen_"+gender+".csv")
+    df = df.replace(-9, np.nan).astype(float)
+    df.dropna(inplace=True)
+    df = df.astype(int)
+    data = dict()
+    data['N'] = df.shape[0]
+    data['K'] = 5
+    data['J'] = df.shape[1]
+    if standardize:
+        from sklearn import preprocessing
+        data['y'] = preprocessing.scale(df.values)
+    else:
+        data['y'] = df.values
+    print("\n\nN = %d, J= %d, K =%d"%(data['N'],data['J'], data['K'] ))
+    data['sigma_prior'] = np.diag(np.linalg.inv(np.cov(data['y'], rowvar=False)))
+    data['stan_constants'] = ['N','J', 'K', 'sigma_prior']
+    data['stan_data'] = ['y']
+    return data
+
+
+# def get_big5_part2():
+#     standardize = True
+#     gender = 'women'
+    
+#     print("\n\nReading data for %s"%gender)
+#     df = pd.read_csv("../dat/muthen_"+gender+".csv")
+#     df = df.replace(-9, np.nan).astype(float)
+#     df.dropna(inplace=True)
+#     df = df.astype(int)
+#     df = df[200:400]
+#     data = dict()
+#     data['N'] = df.shape[0]
+#     data['K'] = 5
+#     data['J'] = df.shape[1]
+#     if standardize:
+#         from sklearn import preprocessing
+#         data['y'] = preprocessing.scale(df.values)
+#     else:
+#         data['y'] = df.values
+#     print("\n\nN = %d, J= %d, K =%d"%(data['N'],data['J'], data['K'] ))
+#     data['sigma_prior'] = np.diag(np.linalg.inv(np.cov(data['y'], rowvar=False)))
+#     data['stan_constants'] = ['N','J', 'K', 'sigma_prior']
+#     data['stan_data'] = ['y']
+#     return data
+
+# def get_big5_part3():
+#     standardize = True
+#     gender = 'women'
+    
+#     print("\n\nReading data for %s"%gender)
+#     df = pd.read_csv("../dat/muthen_"+gender+".csv")
+#     df = df.replace(-9, np.nan).astype(float)
+#     df.dropna(inplace=True)
+#     df = df.astype(int)
+#     df = df[400:]
+#     data = dict()
+#     data['N'] = df.shape[0]
+#     data['K'] = 5
+#     data['J'] = df.shape[1]
+#     if standardize:
+#         from sklearn import preprocessing
+#         data['y'] = preprocessing.scale(df.values)
+#     else:
+#         data['y'] = df.values
+#     print("\n\nN = %d, J= %d, K =%d"%(data['N'],data['J'], data['K'] ))
+#     data['sigma_prior'] = np.diag(np.linalg.inv(np.cov(data['y'], rowvar=False)))
+#     data['stan_constants'] = ['N','J', 'K', 'sigma_prior']
+#     data['stan_data'] = ['y']
+#     return data
 
 
 
