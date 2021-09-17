@@ -87,7 +87,8 @@ def gen_data_master(
             nsim_data,
             J=6,
             K=2,
-            random_seed=random_seed
+            random_seed=random_seed, 
+            factor_number=1
             )
     elif model_num == 6: #2 factor model for binary data
         return gen_data_6(
@@ -325,6 +326,7 @@ def gen_data_4(
     off_diag_residual = False,
     off_diag_corr = 0.6,
     random_seed=None,
+    factor_number = None
     ):
     if random_seed is not None:
         np.random.seed(random_seed)
@@ -391,6 +393,8 @@ def gen_data_4(
     data['sigma_prior'] = sigma_prior
     data['stan_constants'] = ['N','J', 'K', 'sigma_prior']
     data['stan_data'] = ['y']
+    if factor_number is not None:
+        data['K'] = factor_number
     return(data)
 
 
