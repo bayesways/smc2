@@ -9,7 +9,7 @@ def gen_weights_master(
     particles,
     M
     ):
-    if model_num in [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]:
+    if model_num in range(0,16):
         return get_weights_0(
             data,
             particles,

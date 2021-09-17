@@ -35,7 +35,8 @@ def plot_density(df, width=300, height=50) :
             alt.Y('density:Q'),
             alt.Row('row'),
             alt.Column('col'),
-            alt.Color('source')
+            alt.Color('source', title='Inference Algorithm', 
+             legend=alt.Legend(orient="top", labelFontSize=14))
         ).resolve_scale(
             x='independent'
         ).properties(width=width, height=height)
