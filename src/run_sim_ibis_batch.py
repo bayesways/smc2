@@ -67,9 +67,17 @@ elif args.part_num == '3':
     ibis = run_ibis_batch2(
         exp_data = exp_data,  
         model_num = args.model_num,
+        data_end = 500,
+        log_dir = log_dir,
+        )
+elif args.part_num == '4':
+    ibis = run_ibis_batch2(
+        exp_data = exp_data,  
+        model_num = args.model_num,
         data_end = exp_data.size,
         log_dir = log_dir,
         )
+
 
 
 
