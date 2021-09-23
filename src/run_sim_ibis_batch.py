@@ -47,10 +47,11 @@ exp_data.generate()
 save_obj(exp_data, 'data', log_dir)
 
 if args.part_num == '1':
+    # part 1 goes to t=200 by default
     ibis = run_ibis_batch1(
         exp_data,
         args.model_num,
-        500,
+        500, # this is number of particles
         args.gen_model,
         log_dir
         )

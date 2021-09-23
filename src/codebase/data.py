@@ -88,7 +88,7 @@ def gen_data_master(
             J=6,
             K=2,
             random_seed=random_seed, 
-            factor_number=None
+            factor_number=1
             )
     elif model_num == 6: #2 factor model for binary data
         return gen_data_6(
@@ -332,12 +332,14 @@ def gen_data_4(
         np.random.seed(random_seed)
 
     alpha = np.zeros(J)
-    # beta = np.array([[1, 0],
-    #                     [b, 0],
-    #                     [b, 0],
-    #                     [0, 1],
-    #                     [0, b],
-    #                     [0, b]], dtype=float)
+    # beta = np.array(
+    #     [[1, 0],
+    #     [b, 0.3],
+    #     [b, 0],
+    #     [0, 1],
+    #     [0.3, b],
+    #     [0.3, b]],
+    #     dtype=float)
     beta = np.array(
         [[1, 0],
         [b, 0],
