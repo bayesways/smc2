@@ -88,7 +88,7 @@ def gen_data_master(
             J=6,
             K=2,
             random_seed=random_seed, 
-            factor_number=1
+            factor_number=3
             )
     elif model_num == 6: #2 factor model for binary data
         return gen_data_6(
