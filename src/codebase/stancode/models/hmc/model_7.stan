@@ -19,6 +19,6 @@ transformed parameters{
 model {
   to_vector(beta) ~ normal(0, 1);
   to_vector(zz) ~ normal(0, 1);
-  alpha ~ normal(0, 1);
+  alpha ~ normal(0, 10);
   for (n in 1:N) D[n,] ~ bernoulli_logit(y_latent[n,]);
 }
