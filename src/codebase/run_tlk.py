@@ -74,9 +74,9 @@ def model_phonebook_path(model_num, prior, data_type='cont'):
             path = 'CFA/AZ/model_2C.stan' 
     elif model_num == 14:
         if prior:
-            path = 'CFA/EZ/model_1_prior.stan'
+            path = 'CFA/EZ/model_1C_prior.stan'
         else:
-            path = 'CFA/EZ/model_1.stan'
+            path = 'CFA/EZ/model_1C.stan'
     elif model_num == 15:
         if prior:
             path = 'saturated/model_1_prior.stan'

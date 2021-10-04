@@ -11,9 +11,32 @@ Sequential Monte Carlo Methods for Factor Analysis
 
 ### Current results
 
-Continuous Data experiments : correctness and model comparisons in notebooks 3.3 - 3.4.2 , and notebooks 8.1,8.2
 
-Binary Data: correctness is established in notebook 7.1 (and possibly previous notebooks are useful as well.)
+#### Continuous Data Simulations
+
+Correctness is shown in notebooks 3.3 for the EZ data scenario.
+Model comparisons are in notebooks 3.4.2 for EZ and CL data scenario. The saved data are on MAC laptop under `/log/fabian_sim/EZ` and `/log/fabian_sim/CL`.
+
+MISC: There are additional model choice experiments in notebooks  and notebooks 8.1,8.2
+
+
+#### Binary Data Simulations
+
+Correctness is established in notebook 7.1.  
+Comparison of different inference algorithms is done in notebooks 5.2.1-5.2.3. The saved data is on LINUX pc, `/log/IBIS experiments/`.
+
+#### Sensitivity on Priors
+
+Two notebooks on checking the impact of prior choices for the continuous data models. 
+The prior chosen in the papers is dependent on data (to avoid Heywood problems). We tested the effect of using a prior
+that is not dependent on the data. We ran both the EZ model and the AZ models for the EZ data, both for MCMC and for the sequential methodologies. 
+
+Notebooks `9.1 *.ipynb` contain the results. There are also two notebooks which show the results for MCMC only, that are meant to be used for Bayes SEM paper, see notebooks `9.0 * .ipynb`.
+
+**NOTE** there is a mistake in 9.1 EZ notebooks. I believe the sequential run number 2 (with the independent prior) did not
+use the right mode. Needs to re-run. 
+
+
 
 ### On Fabian
 
