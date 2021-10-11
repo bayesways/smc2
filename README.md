@@ -34,7 +34,7 @@ that is not dependent on the data. We ran both the EZ model and the AZ models fo
 Notebooks `9.1 *.ipynb` contain the results. There are also two notebooks which show the results for MCMC only, that are meant to be used for Bayes SEM paper, see notebooks `9.0 * .ipynb`.
 
 **NOTE** there is a mistake in 9.1 EZ notebooks. I believe the sequential run number 2 (with the independent prior) did not
-use the right mode. Needs to re-run. 
+use the right model. Needs to re-run. 
 
 
 
