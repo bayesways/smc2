@@ -61,3 +61,17 @@ Submit jobs with constraings of memory (e.g. 50G) and run time(e.g. 120 hours) a
     ```
     qsub-python -l h_vmem=50G,h_rt=120:0:0 run_sim_smc2.py -th test
     ``` 
+
+### Results
+
+1. Parameter recovery for continuous EZ  model is in notebook `3.3 IBIS-MCMC Comparison for Continuous Data - EZ.ipynb` and the samples are stored on laptop under `log/fabian_sim/EZ/20210912_182221_ezsim_m7/`.
+
+2. Parameter recovery for binary EZ 1 factor model is in notebook `7.1 IBIS-MCMC Comparison for Binary 1 Factor Data - EZ-AZ-EFA.ipynb` and the samples are stroed on laptop under `log/fabian_binary/20210830_024713_1f_binsim/`.
+
+
+### Models
+
+We describe the models in <short name>, <model_phonebook number>, <path/stan_model_name> and a short description if needed
+
+* EZ, num 7, `CFA/EZ/model_1_prior.stan`, standard EZ model for continuous data
+
