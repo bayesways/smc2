@@ -66,8 +66,9 @@ Submit jobs with constraings of memory (e.g. 50G) and run time(e.g. 120 hours) a
 
 1. Parameter recovery for continuous EZ  model is in notebook `3.3 IBIS-MCMC Comparison for Continuous Data - EZ.ipynb` and the samples are stored on laptop under `log/fabian_sim/EZ/20210912_182221_ezsim_m7/`.
 
-2. Parameter recovery for binary EZ 1 factor model is in notebook `7.1 IBIS-MCMC Comparison for Binary 1 Factor Data - EZ-AZ-EFA.ipynb` and the samples are stroed on laptop under `log/fabian_binary/20210830_024713_1f_binsim/`.
+2. Parameter recovery for binary EZ 1 factor model is in notebook `7.1 IBIS-MCMC Comparison for Binary 1 Factor Data - EZ-AZ-EFA.ipynb` and the samples are stored on laptop under `log/fabian_binary/20210830_024713_1f_binsim/`.
 
+3. Model comparisons for the simulations based on BF in notebooks `3.4.2 IBIS-Compare Models-Simulations-EZ` and `3.4.2 IBIS-Compare Models-Simulations-CL`. Samples are stored on laptop under `log/fabian_sim/20210830_024713_1f_binsim/`.
 
 ### Models
 
